@@ -138,13 +138,21 @@ Present summary (packages, dbt projects, orchestration types, etl_configuration 
 uv run --project <SKILL_DIR> python -m replatform_scanner validate <INVENTORY_JSON>
 ```
 
-This checks: placeholders in `sources.yml`/`profiles.yml`, missing files, project name mismatches, unsupported `profiles.yml` fields, `etl_configuration/` schema refs, `EXECUTE DBT PROJECT` refs, CREATE TASK clause ordering, `sources.yml` hardcoded database/schema, TASK DAG orphans, hardcoded schema prefixes in `EXECUTE DBT PROJECT`, hardcoded warehouse names in orchestration SQL, PROCEDURE-based orchestration using `EXECUTE DBT PROJECT` (unsupported), and `'{{ var(...) }}'::DATE` casts that fail on partial dates.
+This checks: placeholders in `sources.yml`/`profiles.yml`, missing files, project name mismatches, unsupported `profiles.yml` fields, `etl_configuration/` schema refs, `EXECUTE DBT PROJECT` refs, CREATE TASK clause ordering, `sources.yml` hardcoded database/schema, TASK DAG orphans, hardcoded schema prefixes in `EXECUTE DBT PROJECT`, hardcoded warehouse names in orchestration SQL, PROCEDURE-based orchestration using `EXECUTE DBT PROJECT` (**ERROR** — this is a Snowflake platform limitation, not just a warning), and `'{{ var(...) }}'::DATE` casts that fail on partial dates (**ERROR** — `YYYY-MM` is not a valid Snowflake DATE).
 
 ### Step 2.2: Present Issues and Apply Fixes
 
 For each issue: show severity, category, file, problem, suggested fix. Ask: **Apply this fix? (Yes/No/Skip all of this type)**
 
 **Issue Categories:** `PLACEHOLDER`, `NAME_MISMATCH`, `SCHEMA_MISMATCH`, `MISSING_FILE`, `ORPHAN_TASK`, `DANGLING_REF`, `SOURCE_SCHEMA_MISMATCH`, `PROFILES_OVERRIDE`, `ORCH_SCHEMA_PREFIX`, `ORCH_WAREHOUSE`, `PROC_EXECUTE_DBT`, `PARTIAL_DATE_CAST`
+
+**Fix Patterns:**
+- **`PROFILES_OVERRIDE`**: Replace source-env connection fields with target values. `snow dbt deploy` requires `account`, `user`, `role`, `database`, `schema`, `warehouse` to be present and valid — do NOT strip them to just `type: snowflake`.
+- **`PROC_EXECUTE_DBT`** (ERROR): `EXECUTE DBT PROJECT` cannot run inside SQL stored procedures. Convert to a TASK-based DAG where each `EXECUTE DBT PROJECT` is a separate child task with `AFTER` dependency.
+- **`PARTIAL_DATE_CAST`** (ERROR): `'{{ var("x") }}'::DATE` fails when the variable value is `YYYY-MM` format. Fix by using `TO_DATE('{{ var("x") }}', 'YYYY-MM')` or ensuring variables are always `YYYY-MM-DD`.
+- **`ORCH_SCHEMA_PREFIX`**: Replace hardcoded source schema (e.g., `ETL.`) in `EXECUTE DBT PROJECT` with the target schema (e.g., `PUBLIC.`).
+- **`ORCH_WAREHOUSE`**: Replace hardcoded source warehouses (e.g., `ETL_WH`) with the target warehouse.
+- **`SOURCE_SCHEMA_MISMATCH`**: Remove `database` field from `sources.yml` and set `schema` to the target schema.
 
 After all fixes, present summary (found/fixed/skipped/remaining). Ask: **Proceed to Phase 3?**
 
@@ -180,6 +188,8 @@ Before deploying dbt projects, check whether source tables from `sources.yml` ex
 2. **Create stub tables** — empty tables with columns from `sources.yml`
 3. **Skip** — user creates manually
 
+**IMPORTANT:** When creating stub tables, do NOT rely solely on `sources.yml` column declarations — they may be incomplete. **Always read the staging model SQL** (e.g., `stg_raw__customers.sql`) to find the exact columns referenced in the `SELECT` list. The model SQL is the source of truth for required columns.
+
 **IMPORTANT:** Use `CREATE TABLE IF NOT EXISTS` for new stubs, `CREATE OR REPLACE TABLE` for tables with wrong columns. Never use `ALTER TABLE ADD COLUMN`. See `references/snowflake-sql-patterns.md` for exact syntax.
 
 **⚠️ STOP:** Present the list of tables to create/seed and get approval before executing any CREATE or DROP statements.
@@ -187,7 +197,14 @@ Before deploying dbt projects, check whether source tables from `sources.yml` ex
 ### Step 3.2: Deploy dbt Projects
 
 ```bash
-snow dbt deploy <PROJECT_NAME> --source <PROJECT_DIR> --schema <TARGET_SCHEMA> --database <TARGET_DATABASE> --force
+snow dbt deploy <PROJECT_NAME> \
+  --source <PROJECT_DIR> \
+  --database <TARGET_DATABASE> \
+  --schema <TARGET_SCHEMA> \
+  --connection <CONNECTION_NAME> \
+  --warehouse <TARGET_WAREHOUSE> \
+  --role <TARGET_ROLE> \
+  --force
 ```
 
 Track: `[DONE]` / `[FAIL]` / `[PENDING]` per project.
@@ -207,16 +224,24 @@ For each package: read orchestration SQL, verify `EXECUTE DBT PROJECT` refs, pre
 ### Step 4.1: Test dbt Projects Individually
 
 ```sql
-EXECUTE DBT PROJECT <schema>.<project_name>
+EXECUTE DBT PROJECT <database>.<schema>.<project_name>
   ARGS = 'build --select tag:<tag> --target dev';
 ```
+
+**Passing dbt vars** (e.g. for `report_month`):
+```sql
+EXECUTE DBT PROJECT <database>.<schema>.<project_name>
+  ARGS = 'run --vars ''{report_month: 2024-01-01}''';
+```
+
+**IMPORTANT:** The syntax is `ARGS = '...'` (single equals, string literal). Do NOT use `ARGS => '...'` (Snowflake named-parameter syntax) — it will fail with a syntax error. Use fully-qualified `DATABASE.SCHEMA.PROJECT_NAME` in both EXECUTE statements and TASK definitions.
 
 Track: `[PASS]` / `[FAIL]` per project with model counts and errors.
 
 ### Step 4.2: Test Orchestration
 
-For TASK-based: `EXECUTE TASK <schema>.<package_name>;` then check `TASK_HISTORY()`.
-For PROCEDURE-based: `CALL <schema>.<package_name>();`
+For TASK-based: `EXECUTE TASK <database>.<schema>.<package_name>;` then check `TASK_HISTORY()`.
+For PROCEDURE-based: **⚠️ WARNING** — `EXECUTE DBT PROJECT` inside SQL stored procedures is a known Snowflake limitation (fails with `Unsupported statement type 'SHOW PARAMETER'`). If the scanner flagged `PROC_EXECUTE_DBT`, this orchestration pattern must be converted to a TASK-based DAG before it can work. See Troubleshooting table.
 
 ### Step 4.3: Data Validation
 
@@ -271,8 +296,7 @@ This skill produces:
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `invalid identifier 'COLUMN_NAME'` during dbt build | `sources.yml` column declarations incomplete — stub table was created with fewer columns than the model SQL expects | Add missing columns to `sources.yml`, then recreate stub with `CREATE OR REPLACE TABLE` |
-| `Failed to use database 'X': Object does not exist` | `profiles.yml` has hardcoded connection fields (`account`, `database`, `schema`, `warehouse`) from the source environment that conflict with `--database`/`--schema` flags | Remove all connection fields from `profiles.yml` — keep only `type: snowflake` and `threads: N`. Run validator to detect with `PROFILES_OVERRIDE` category |
-| `Schema 'X.Y' does not exist` | `profiles.yml` has hardcoded database (e.g. `CONTOSO_DW`) that differs from the `--database` flag | Remove `database` from profiles.yml; `snow dbt deploy --database` overrides it |
+| `Missing required fields: account, database, role, schema, user, warehouse` | `profiles.yml` was stripped too aggressively or has placeholder values from the source environment | `snow dbt deploy` validates profiles.yml and **requires** all connection fields. Replace source-env values with target values: `account`, `user`, `role`, `database`, `schema`, `warehouse`. The `--database`/`--schema` CLI flags override at deploy time, but the fields must still be present and valid in the YAML. Run validator to detect with `PROFILES_OVERRIDE` category |
 | `source table not found` | Source tables don't exist in target — seeds not run, stubs not created | Run Step 3.1.5: seed from CSV or create stubs |
 | `SOURCE_SCHEMA_MISMATCH` false positive | Validator flagged `schema: PUBLIC` without `database` | This was fixed — only `database` triggers the warning now. Update skill scripts if using old version |
 | `SQL compilation error: syntax error ... ADD COLUMN` | Skill generated `ALTER TABLE ADD COLUMN` instead of `CREATE TABLE` | Use `CREATE TABLE IF NOT EXISTS` or `CREATE OR REPLACE TABLE` per `references/snowflake-sql-patterns.md` |
