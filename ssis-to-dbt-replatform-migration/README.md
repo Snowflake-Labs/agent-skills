@@ -59,6 +59,36 @@ The scanner catches common issues in SnowConvert output before they become deplo
 - **Python 3.11+** and **uv** package manager
 - **Cortex Code** — the skill runs inside Cortex Code sessions
 
+## Installation
+
+### Option 1: Remote (auto-synced)
+
+Add to `~/.snowflake/cortex/skills.json`:
+
+```json
+{
+  "remote": [
+    {
+      "source": "https://github.com/iamontheinet/cortex-skills",
+      "ref": "main",
+      "skills": [{ "name": "ssis-to-dbt-replatform-migration" }]
+    }
+  ]
+}
+```
+
+### Option 2: Manual
+
+```bash
+git clone https://github.com/iamontheinet/cortex-skills.git /tmp/cortex-skills
+cp -r /tmp/cortex-skills/ssis-to-dbt-replatform-migration \
+  ~/.snowflake/cortex/skills/ssis-to-dbt-replatform-migration
+```
+
+### Verify
+
+Run `/skill` in Cortex Code to confirm it appears, or invoke directly with `$ssis-to-dbt-replatform-migration`.
+
 ## Usage
 
 This skill is invoked automatically by Cortex Code when you mention deploying SnowConvert Replatform output. You can also invoke it directly:
