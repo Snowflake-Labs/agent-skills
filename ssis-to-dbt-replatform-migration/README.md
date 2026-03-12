@@ -49,6 +49,7 @@ The scanner catches common issues in SnowConvert output before they become deplo
 | `SCHEMA_MISMATCH` | WARNING | `etl_configuration/` objects reference `public.` schema |
 | `SOURCE_SCHEMA_MISMATCH` | WARNING | `sources.yml` has hardcoded `database` field |
 | `ORCH_SCHEMA_PREFIX` | WARNING | Hardcoded schema prefix in `EXECUTE DBT PROJECT` |
+| `PROFILES_OVERRIDE` | WARNING | Source-environment connection fields in `profiles.yml` — `role`/`account`/`user` must be real target values (not placeholders); `database`/`schema`/`warehouse` are overridden by CLI flags |
 | `ORCH_WAREHOUSE` | WARNING | Hardcoded warehouse name in orchestration SQL |
 | `PARTIAL_DATE_CAST` | WARNING | `'{{ var(...) }}'::DATE` fails on partial dates like `YYYY-MM` |
 
@@ -173,7 +174,7 @@ ssis-to-dbt-replatform-migration/
         validator_service.py        # Validation checks and issue detection
   tests/
     conftest.py                     # Test fixtures
-    test_scanner.py                 # 69 tests covering all validator checks
+    test_scanner.py                 # 78 tests covering all validator checks
   sample-replatform-output/         # Test artifact (see above)
     generate_seeds.py               # Deterministic seed CSV generator
     Output/ETL/                     # 3 packages, 5 dbt projects, etl_configuration
