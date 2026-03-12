@@ -1,6 +1,6 @@
 """Comprehensive tests for replatform_scanner.
 
-60 tests across 8 groups + 4 new groups:
+67+ tests across 8 groups + 5 new groups:
   A: ScannerService — Happy Path (5)
   B: ScannerService — Edge Cases (10)
   C: Validation Issue Detection (8)
@@ -15,6 +15,7 @@
   E: Serialization Roundtrip (2)
   F: Regex Patterns (4)
   G: CLI Commands (3)
+  H: Regression Tests — Bugs found during end-to-end testing (10)
 """
 
 import json
@@ -34,6 +35,7 @@ from replatform_scanner.services.scanner_service import (
     CREATE_TASK_RE,
     EXECUTE_DBT_RE,
     PLACEHOLDER_RE,
+    _strip_sql_comments,
 )
 
 # ───────────────────────────────────────────────────────────────
@@ -1309,7 +1311,7 @@ class TestProfilesOverrideFields:
         assert "database" in override[0].problem
         assert "account" in override[0].problem
         assert "schema" in override[0].problem
-        assert "type: snowflake" in override[0].suggested_fix
+        assert "Replace" in override[0].suggested_fix
 
     def test_minimal_profiles_no_override_warning(self, tmp_path):
         """profiles.yml with only type + threads → no PROFILES_OVERRIDE."""
@@ -1544,3 +1546,287 @@ class TestCLI:
         result = self._run_cli("nonexistent_cmd")
         assert result.returncode == 1
         assert "Unknown command" in result.stderr
+
+
+# ───────────────────────────────────────────────────────────────
+# Group H: Regression Tests — Bugs found during end-to-end testing
+# ───────────────────────────────────────────────────────────────
+
+
+class TestRegressionBugs:
+    """Regression tests for bugs discovered during the Phase 0-3 end-to-end
+    test of the replatform skill.  These ensure the fixes are permanent and
+    cannot silently regress."""
+
+    # -- Bug 1: PROFILES_OVERRIDE suggested_fix must NOT tell users to
+    #    remove/strip fields that `snow dbt deploy` requires. ----------------
+
+    def test_profiles_override_fix_says_replace_not_remove(self, tmp_path):
+        """PROFILES_OVERRIDE suggested_fix should say 'Replace', NOT 'Remove' or 'Keep only type'."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        proj = make_dbt_project(pkg_dir, "proj1", staging_models=["stg_a"])
+        (proj / "profiles.yml").write_text(
+            "my_profile:\n"
+            "  target: dev\n"
+            "  outputs:\n"
+            "    dev:\n"
+            "      type: snowflake\n"
+            "      account: old.us-east-1\n"
+            "      role: OLD_ROLE\n"
+            "      database: OLD_DB\n"
+            "      schema: OLD_SCHEMA\n"
+        )
+        make_orchestration_sql(pkg_dir, "Pkg", tasks=[{"name": "t1"}])
+
+        inv = ScannerService().scan(str(root))
+        new_issues = ValidatorService().validate(inv)
+
+        override = [i for i in new_issues if i.category == "PROFILES_OVERRIDE"]
+        assert len(override) == 1
+        fix_text = override[0].suggested_fix
+        # Must say "Replace" (correct guidance)
+        assert "Replace" in fix_text, f"suggested_fix should say 'Replace': {fix_text}"
+        # Must NOT say "Remove" or "Keep only" (old broken guidance)
+        assert "Remove" not in fix_text, f"suggested_fix should NOT say 'Remove': {fix_text}"
+        assert "Keep only" not in fix_text, f"suggested_fix should NOT say 'Keep only': {fix_text}"
+        # Must warn that role/account/user are used verbatim (Bug 5)
+        assert "role" in fix_text.lower(), f"suggested_fix should warn about role: {fix_text}"
+        assert "verbatim" in fix_text.lower(), f"suggested_fix should say 'verbatim': {fix_text}"
+        assert "placeholder" in fix_text.lower(), f"suggested_fix should warn against placeholder: {fix_text}"
+
+    # -- Bug 2: DANGLING_REF must NOT match inside SQL comments. -------------
+
+    def test_dangling_ref_ignores_commented_out_execute_dbt(self, tmp_path):
+        """Commented-out EXECUTE DBT PROJECT lines must not produce DANGLING_REF."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        make_dbt_project(pkg_dir, "ActiveProj", staging_models=["stg_a"])
+        # ArchiveData is commented out — should NOT be picked up as a ref
+        sql = (
+            "CREATE OR REPLACE TASK root_task\n"
+            "  WAREHOUSE = COMPUTE_WH\n"
+            "  SCHEDULE = '60 MINUTE'\n"
+            "AS\n"
+            "  EXECUTE DBT PROJECT ActiveProj;\n"
+            "\n"
+            "-- NOTE: ArchiveData disabled pending review\n"
+            "-- EXECUTE DBT PROJECT ArchiveData;\n"
+        )
+        make_orchestration_sql(pkg_dir, "Pkg", raw_sql=sql)
+
+        inv = ScannerService().scan(str(root))
+        new_issues = ValidatorService().validate(inv)
+
+        dangling = [i for i in inv.validation_issues + new_issues if i.category == "DANGLING_REF"]
+        # ArchiveData is commented out, so no DANGLING_REF for it
+        for issue in dangling:
+            assert "ArchiveData" not in issue.problem, (
+                f"DANGLING_REF falsely matched commented-out ArchiveData: {issue.problem}"
+            )
+
+    def test_dangling_ref_ignores_note_comments(self, tmp_path):
+        """Words inside -- NOTE comments must not be parsed as dbt project refs."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        make_dbt_project(pkg_dir, "RealProj", staging_models=["stg_a"])
+        sql = (
+            "CREATE OR REPLACE TASK root_task\n"
+            "  WAREHOUSE = COMPUTE_WH\n"
+            "  SCHEDULE = '60 MINUTE'\n"
+            "AS\n"
+            "  EXECUTE DBT PROJECT RealProj;\n"
+            "\n"
+            "-- This task runs inside the daily pipeline\n"
+        )
+        make_orchestration_sql(pkg_dir, "Pkg", raw_sql=sql)
+
+        inv = ScannerService().scan(str(root))
+        new_issues = ValidatorService().validate(inv)
+
+        dangling = [i for i in inv.validation_issues + new_issues if i.category == "DANGLING_REF"]
+        for issue in dangling:
+            assert "inside" not in issue.problem.lower(), (
+                f"DANGLING_REF falsely matched word from comment: {issue.problem}"
+            )
+
+    # -- Bug 3: ORCH_SCHEMA_PREFIX must NOT match inside SQL comments. -------
+
+    def test_orch_schema_prefix_ignores_commented_out_lines(self, tmp_path):
+        """Commented-out EXECUTE DBT PROJECT ETL.X must not produce ORCH_SCHEMA_PREFIX."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        make_dbt_project(pkg_dir, "LoadOrders", staging_models=["stg_a"])
+        sql = (
+            "CREATE OR REPLACE TASK root_task\n"
+            "  WAREHOUSE = COMPUTE_WH\n"
+            "  SCHEDULE = '60 MINUTE'\n"
+            "AS\n"
+            "  EXECUTE DBT PROJECT LoadOrders;\n"
+            "\n"
+            "-- Old reference: EXECUTE DBT PROJECT ETL.ArchiveData;\n"
+        )
+        make_orchestration_sql(pkg_dir, "Pkg", raw_sql=sql)
+
+        inv = ScannerService().scan(str(root))
+        new_issues = ValidatorService().validate(inv)
+
+        prefix_issues = [i for i in new_issues if i.category == "ORCH_SCHEMA_PREFIX"]
+        assert len(prefix_issues) == 0, (
+            f"ORCH_SCHEMA_PREFIX falsely matched inside comment: {prefix_issues}"
+        )
+
+    # -- Bug 3b: ORCH_WAREHOUSE must NOT match inside SQL comments. ----------
+
+    def test_orch_warehouse_ignores_commented_out_lines(self, tmp_path):
+        """Commented-out WAREHOUSE = OLD_WH must not produce ORCH_WAREHOUSE."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        make_dbt_project(pkg_dir, "Proj1", staging_models=["stg_a"])
+        sql = (
+            "CREATE OR REPLACE TASK root_task\n"
+            "  WAREHOUSE = COMPUTE_WH\n"
+            "  SCHEDULE = '60 MINUTE'\n"
+            "AS\n"
+            "  EXECUTE DBT PROJECT Proj1;\n"
+            "\n"
+            "-- Previously used: WAREHOUSE = OLD_ETL_WH\n"
+        )
+        make_orchestration_sql(pkg_dir, "Pkg", raw_sql=sql)
+
+        inv = ScannerService().scan(str(root))
+        new_issues = ValidatorService().validate(inv)
+
+        wh_issues = [i for i in new_issues if i.category == "ORCH_WAREHOUSE"]
+        # Should only find COMPUTE_WH, not OLD_ETL_WH from the comment
+        for issue in wh_issues:
+            assert "OLD_ETL_WH" not in issue.problem, (
+                f"ORCH_WAREHOUSE falsely matched inside comment: {issue.problem}"
+            )
+
+    # -- _strip_sql_comments unit test ---------------------------------------
+
+    def test_strip_sql_comments_preserves_active_lines(self):
+        """_strip_sql_comments blanks comment lines, keeps active lines intact."""
+        text = (
+            "CREATE TASK root_task\n"
+            "  WAREHOUSE = WH\n"
+            "-- This is a comment\n"
+            "  EXECUTE DBT PROJECT MyProj;\n"
+            "  -- another comment with EXECUTE DBT PROJECT Fake;\n"
+            "END;\n"
+        )
+        result = _strip_sql_comments(text)
+        lines = result.split("\n")
+        assert lines[0] == "CREATE TASK root_task"
+        assert lines[1] == "  WAREHOUSE = WH"
+        assert lines[2] == ""  # comment stripped
+        assert lines[3] == "  EXECUTE DBT PROJECT MyProj;"
+        assert lines[4] == ""  # indented comment stripped
+        assert lines[5] == "END;"
+
+    # -- Bug 4: SKILL.md must instruct task creation in dependency order ------
+    #    (root/parent first, then children).  We verify the scanner correctly
+    #    parses all task names in a DAG, which the skill needs to reorder.
+
+    def test_scanner_detects_task_parent_child_structure(self, tmp_path):
+        """Scanner must parse all task names (root + children) so the skill can order them."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        make_dbt_project(pkg_dir, "ProjA", staging_models=["stg_a"])
+        # Orchestration with root + child tasks (child references root via AFTER)
+        make_orchestration_sql(pkg_dir, "Pkg", raw_sql=(
+            "CREATE OR REPLACE TASK DailyLoad_ROOT\n"
+            "  WAREHOUSE = COMPUTE_WH\n"
+            "  SCHEDULE = 'USING CRON 0 5 * * * UTC'\n"
+            "AS SELECT 1;\n\n"
+            "CREATE OR REPLACE TASK DailyLoad_Child\n"
+            "  WAREHOUSE = COMPUTE_WH\n"
+            "  AFTER DailyLoad_ROOT\n"
+            "AS EXECUTE DBT PROJECT DB.SCHEMA.ProjA\n"
+            "   ARGS = 'build';\n"
+        ))
+
+        inv = ScannerService().scan(str(root))
+        pkg = inv.packages[0]
+        # Verify both tasks are found via task_names
+        assert "DailyLoad_ROOT" in pkg.task_names, f"Root task not found: {pkg.task_names}"
+        assert "DailyLoad_Child" in pkg.task_names, f"Child task not found: {pkg.task_names}"
+        # Root should be first in task_names (parse order = file order)
+        assert pkg.task_names[0] == "DailyLoad_ROOT", (
+            f"Root task should appear first in task_names: {pkg.task_names}"
+        )
+
+    # -- Bug 5: PROFILES_OVERRIDE must warn that `role` is used verbatim ------
+    #    and cannot be 'placeholder'.
+
+    def test_profiles_override_fix_warns_role_not_placeholder(self, tmp_path):
+        """suggested_fix must specifically warn that role is NOT overridden by CLI."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        proj = make_dbt_project(pkg_dir, "proj1", staging_models=["stg_a"])
+        (proj / "profiles.yml").write_text(
+            "my_profile:\n"
+            "  target: dev\n"
+            "  outputs:\n"
+            "    dev:\n"
+            "      type: snowflake\n"
+            "      role: placeholder\n"
+            "      database: placeholder\n"
+            "      schema: placeholder\n"
+            "      warehouse: placeholder\n"
+        )
+        make_orchestration_sql(pkg_dir, "Pkg", tasks=[{"name": "t1"}])
+
+        inv = ScannerService().scan(str(root))
+        new_issues = ValidatorService().validate(inv)
+
+        override = [i for i in new_issues if i.category == "PROFILES_OVERRIDE"]
+        assert len(override) == 1
+        fix_text = override[0].suggested_fix
+        # Must distinguish role (verbatim) from database/schema/warehouse (CLI-overridden)
+        assert "role" in fix_text.lower()
+        assert "verbatim" in fix_text.lower()
+        # Must NOT tell users that ALL fields can be placeholder
+        assert "NOT 'placeholder'" in fix_text or "NOT 'placeholder'" in fix_text.replace("\u2018", "'").replace("\u2019", "'"), (
+            f"suggested_fix should explicitly warn against placeholder for role: {fix_text}"
+        )
+
+    def test_profiles_override_fix_says_db_schema_wh_overridden(self, tmp_path):
+        """suggested_fix must say database/schema/warehouse ARE overridden by CLI flags."""
+        root = make_etl_dir(tmp_path, etl_config=False)
+        pkg_dir = root / "Pkg"
+        pkg_dir.mkdir()
+        proj = make_dbt_project(pkg_dir, "proj1", staging_models=["stg_a"])
+        (proj / "profiles.yml").write_text(
+            "my_profile:\n"
+            "  target: dev\n"
+            "  outputs:\n"
+            "    dev:\n"
+            "      type: snowflake\n"
+            "      database: OLD_DB\n"
+            "      schema: OLD_SCHEMA\n"
+            "      warehouse: OLD_WH\n"
+        )
+        make_orchestration_sql(pkg_dir, "Pkg", tasks=[{"name": "t1"}])
+
+        inv = ScannerService().scan(str(root))
+        new_issues = ValidatorService().validate(inv)
+
+        override = [i for i in new_issues if i.category == "PROFILES_OVERRIDE"]
+        assert len(override) == 1
+        fix_text = override[0].suggested_fix.lower()
+        # Must say that database/schema/warehouse are overridden by CLI
+        assert "overridden" in fix_text or "override" in fix_text, (
+            f"suggested_fix should mention CLI override for db/schema/wh: {fix_text}"
+        )
+        assert "placeholder" in fix_text, (
+            f"suggested_fix should say placeholders are OK for CLI-overridden fields: {fix_text}"
+        )

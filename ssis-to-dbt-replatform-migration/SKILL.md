@@ -171,7 +171,7 @@ For each issue: show severity, category, file, problem, suggested fix. Ask: **Ap
 **Issue Categories:** `PLACEHOLDER`, `NAME_MISMATCH`, `SCHEMA_MISMATCH`, `MISSING_FILE`, `ORPHAN_TASK`, `DANGLING_REF`, `SOURCE_SCHEMA_MISMATCH`, `PROFILES_OVERRIDE`, `ORCH_SCHEMA_PREFIX`, `ORCH_WAREHOUSE`, `PROC_EXECUTE_DBT`, `PARTIAL_DATE_CAST`
 
 **Fix Patterns:**
-- **`PROFILES_OVERRIDE`**: Replace source-env connection fields with target values. `snow dbt deploy` requires `account`, `user`, `role`, `database`, `schema`, `warehouse` to be present and valid — do NOT strip them to just `type: snowflake`.
+- **`PROFILES_OVERRIDE`**: Replace source-env connection fields with target values. `snow dbt deploy` requires `account`, `user`, `role`, `database`, `schema`, `warehouse` to be present. **`role`, `account`, `user` are used verbatim** — they MUST be real target values (not 'placeholder'). `database`, `schema`, `warehouse` are overridden by CLI flags.
 - **`PROC_EXECUTE_DBT`** (ERROR): `EXECUTE DBT PROJECT` cannot run inside SQL stored procedures. Convert to a TASK-based DAG where each `EXECUTE DBT PROJECT` is a separate child task with `AFTER` dependency.
 - **`PARTIAL_DATE_CAST`** (ERROR): `'{{ var("x") }}'::DATE` fails when the variable value is `YYYY-MM` format. Fix by using `TO_DATE('{{ var("x") }}', 'YYYY-MM')` or ensuring variables are always `YYYY-MM-DD`.
 - **`ORCH_SCHEMA_PREFIX`**: Replace hardcoded source schema (e.g., `ETL.`) in `EXECUTE DBT PROJECT` with the target schema (e.g., `PUBLIC.`).
@@ -192,13 +192,23 @@ After all fixes, present summary (found/fixed/skipped/remaining). Ask: **Proceed
 
 Ask the user for: target DATABASE, target SCHEMA, Snowflake CLI connection name, warehouse.
 
-### Step 3.0.1: Verify Database and Schema Exist
+### Step 3.0.1: Ensure Database and Schema Exist
 
-**Load** `references/snowflake-sql-patterns.md` for SQL syntax reference.
+**IMPORTANT — do this BEFORE any other SQL in Phase 3.**
 
-Check database exists with `SHOW DATABASES LIKE`. If missing, offer: Create / Different name / Stop.
-Check schema exists with `SHOW SCHEMAS LIKE`. If missing, offer: Create / Different name / Stop.
-Set active context with `USE DATABASE` / `USE SCHEMA`.
+Run these two statements silently (do NOT run `USE DATABASE` first — it will fail if the database does not exist yet):
+
+```sql
+CREATE DATABASE IF NOT EXISTS <TARGET_DATABASE>;
+CREATE SCHEMA IF NOT EXISTS <TARGET_DATABASE>.<TARGET_SCHEMA>;
+```
+
+Then set active context:
+
+```sql
+USE DATABASE <TARGET_DATABASE>;
+USE SCHEMA <TARGET_DATABASE>.<TARGET_SCHEMA>;
+```
 
 ### Step 3.1: Deploy etl_configuration
 
@@ -239,6 +249,7 @@ Track: `[DONE]` / `[FAIL]` / `[PENDING]` per project.
 
 **If error occurs:**
 - `Missing required fields` → profiles.yml needs all connection fields (see `PROFILES_OVERRIDE` fix pattern)
+- `Failed to use role <name>` → `role` in profiles.yml must be a real target role, NOT a placeholder. `snow dbt deploy` uses `role` verbatim from profiles.yml — it is NOT overridden by CLI flags. Set it to the role from your Snowflake connection (e.g. `snow connection list` to check)
 - `source table not found` → go back to Step 3.1.5 to create stubs/seeds
 - `Project already exists` → use `--force` flag to overwrite
 
@@ -246,7 +257,17 @@ Track: `[DONE]` / `[FAIL]` / `[PENDING]` per project.
 
 For each package: read orchestration SQL, verify `EXECUTE DBT PROJECT` refs, present for review, execute.
 
+**CRITICAL — TASK DAG creation order:**
+Tasks that reference predecessors via `AFTER <task>` will fail with `Invalid predecessor` if the predecessor does not exist yet. You MUST create tasks in **dependency order**:
+
+1. **Root tasks first** — tasks with a `SCHEDULE` clause and NO `AFTER` clause.
+2. **Then child tasks** — in topological order so that every task referenced in an `AFTER` clause already exists.
+3. **General rule:** if task B has `AFTER task_A`, then `task_A` must be created before `task_B`.
+
+Parse each orchestration SQL file to identify the DAG structure before executing any `CREATE TASK` statements. If a file contains multiple tasks, reorder the statements so roots come first.
+
 **If error occurs:**
+- `Invalid predecessor 'X' was specified` → task creation order is wrong; create the predecessor task first, then retry
 - `Object 'X' does not exist` → hardcoded schema prefix; apply `ORCH_SCHEMA_PREFIX` fix
 - `Warehouse 'X' does not exist` → hardcoded warehouse; apply `ORCH_WAREHOUSE` fix
 - `Unsupported statement type 'SHOW PARAMETER'` → procedure-based orchestration; must convert to TASK DAG (see `PROC_EXECUTE_DBT`)
@@ -334,7 +355,9 @@ This skill produces:
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `invalid identifier 'COLUMN_NAME'` during dbt build | `sources.yml` column declarations incomplete — stub table was created with fewer columns than the model SQL expects | Add missing columns to `sources.yml`, then recreate stub with `CREATE OR REPLACE TABLE` |
-| `Missing required fields: account, database, role, schema, user, warehouse` | `profiles.yml` was stripped too aggressively or has placeholder values from the source environment | `snow dbt deploy` validates profiles.yml and **requires** all connection fields. Replace source-env values with target values: `account`, `user`, `role`, `database`, `schema`, `warehouse`. The `--database`/`--schema` CLI flags override at deploy time, but the fields must still be present and valid in the YAML. Run validator to detect with `PROFILES_OVERRIDE` category |
+| `Missing required fields: account, database, role, schema, user, warehouse` | `profiles.yml` was stripped too aggressively or has placeholder values from the source environment | `snow dbt deploy` validates profiles.yml and **requires** all connection fields. Replace source-env values with target values. **`role`, `account`, `user` are used verbatim** — they must be real target values (not 'placeholder'). `database`, `schema`, `warehouse` are overridden by CLI flags so placeholders are OK for those. Run validator to detect with `PROFILES_OVERRIDE` category |
+| `Failed to use role <name>` | `role` in profiles.yml is set to a placeholder or source-env value that doesn't exist in the target account | `snow dbt deploy` reads `role` directly from profiles.yml — it is NOT overridden by CLI flags. Set `role` to the actual Snowflake role from your target connection (e.g. the role shown by `snow connection list`) |
+| `Invalid predecessor 'X' was specified` | Child tasks with `AFTER` clauses were created before their parent/predecessor tasks | Create tasks in dependency order: root tasks (with `SCHEDULE`, no `AFTER`) first, then children. See Step 3.3 |
 | `source table not found` | Source tables don't exist in target — seeds not run, stubs not created | Run Step 3.1.5: seed from CSV or create stubs |
 | `SOURCE_SCHEMA_MISMATCH` false positive | Validator flagged `schema: PUBLIC` without `database` | This was fixed — only `database` triggers the warning now. Update skill scripts if using old version |
 | `SQL compilation error: syntax error ... ADD COLUMN` | Skill generated `ALTER TABLE ADD COLUMN` instead of `CREATE TABLE` | Use `CREATE TABLE IF NOT EXISTS` or `CREATE OR REPLACE TABLE` per `references/snowflake-sql-patterns.md` |

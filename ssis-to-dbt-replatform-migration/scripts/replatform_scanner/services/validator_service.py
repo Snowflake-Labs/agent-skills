@@ -8,6 +8,7 @@ from typing import List
 import yaml
 
 from ..models import ReplatformInventory, ValidationIssue
+from .scanner_service import _strip_sql_comments
 
 
 SCHEMA_REF_RE = re.compile(r"\bpublic\.\w+", re.IGNORECASE)
@@ -25,20 +26,23 @@ UNSUPPORTED_PROFILES_FIELDS = {
     "retry_all",
 }
 
-# Fields in profiles.yml that `snow dbt deploy` overrides from the CLI
-# connection.  Hardcoded values here reference the original source
-# environment and cause "Object does not exist" errors when the
-# --database / --schema flags differ from what's in profiles.yml.
-# Only `type` and `threads` are actually needed by snow dbt deploy.
-PROFILES_OVERRIDE_FIELDS = {
-    "account",
-    "user",
-    "password",
-    "role",
-    "database",
-    "schema",
-    "warehouse",
-}
+# Fields in profiles.yml that reference the source environment and must be
+# updated before `snow dbt deploy`.  Split into two groups:
+#
+#   CLI-OVERRIDDEN: `snow dbt deploy` replaces these from CLI flags
+#   (--database, --schema, --warehouse).  Placeholder values are OK here
+#   because the CLI flags win at deploy time.
+#
+#   USED-VERBATIM: `snow dbt deploy` reads these from profiles.yml and
+#   uses them as-is (role) or from the CLI connection (account, user).
+#   `role` in particular is NOT overridden — a value like 'placeholder'
+#   will cause "Failed to use role placeholder" at deploy time.
+#   `password` is handled by the CLI connection's auth mechanism.
+PROFILES_CLI_OVERRIDDEN_FIELDS = {"database", "schema", "warehouse"}
+PROFILES_VERBATIM_FIELDS = {"account", "user", "role"}
+PROFILES_OVERRIDE_FIELDS = (
+    PROFILES_CLI_OVERRIDDEN_FIELDS | PROFILES_VERBATIM_FIELDS | {"password"}
+)
 
 # Regex to capture schema-qualified EXECUTE DBT PROJECT references.
 # Group 1 = schema prefix, Group 2 = project name.
@@ -276,13 +280,19 @@ class ValidatorService:
                                             f"These reference the original environment and may "
                                             f"cause 'Object does not exist' errors."
                                         ),
-                                        suggested_fix=(
-                                            f"Remove {', '.join(sorted(override_fields))} from "
-                                            f"profiles.yml. Keep only `type: snowflake` and "
-                                            f"`threads: N`. `snow dbt deploy` gets account, "
-                                            f"database, schema, warehouse, etc. from the CLI "
-                                            f"connection and --database/--schema flags."
-                                        ),
+                                    suggested_fix=(
+                                        f"Replace source-environment values for "
+                                        f"{', '.join(sorted(override_fields))} in "
+                                        f"profiles.yml with target-environment "
+                                        f"values. **`role`, `account`, and `user` "
+                                        f"are used verbatim by `snow dbt deploy`** "
+                                        f"— they MUST be set to real target values "
+                                        f"(e.g. the role from your Snowflake "
+                                        f"connection), NOT 'placeholder'. "
+                                        f"`database`, `schema`, and `warehouse` "
+                                        f"are overridden by CLI flags so placeholder "
+                                        f"values are acceptable for those three."
+                                    ),
                                     )
                                 )
                 except Exception:
@@ -300,18 +310,19 @@ class ValidatorService:
                 continue
             try:
                 content = orch_path.read_text(encoding="utf-8", errors="replace")
+                active_content = _strip_sql_comments(content)
                 # Check each CREATE TASK block individually
                 task_re = re.compile(
                     r"CREATE\s+(?:OR\s+REPLACE\s+)?TASK\s+(\S+)",
                     re.IGNORECASE,
                 )
-                for match in task_re.finditer(content):
+                for match in task_re.finditer(active_content):
                     task_name = match.group(1)
                     start = match.start()
                     # Find the end of this task block (next CREATE or EOF)
-                    next_create = re.search(r"\nCREATE\s", content[match.end():], re.IGNORECASE)
-                    end = match.end() + next_create.start() if next_create else len(content)
-                    block = content[start:end]
+                    next_create = re.search(r"\nCREATE\s", active_content[match.end():], re.IGNORECASE)
+                    end = match.end() + next_create.start() if next_create else len(active_content)
+                    block = active_content[start:end]
                     # Check if AFTER appears before WAREHOUSE in this block
                     after_pos = re.search(r"\bAFTER\b", block, re.IGNORECASE)
                     warehouse_pos = re.search(r"\bWAREHOUSE\b", block, re.IGNORECASE)
@@ -406,7 +417,8 @@ class ValidatorService:
                 continue
             try:
                 content = orch_path.read_text(encoding="utf-8", errors="replace")
-                matches = EXECUTE_DBT_QUALIFIED_RE.findall(content)
+                active_content = _strip_sql_comments(content)
+                matches = EXECUTE_DBT_QUALIFIED_RE.findall(active_content)
                 if not matches:
                     continue
                 # matches is a list of (schema, project) tuples
@@ -454,7 +466,8 @@ class ValidatorService:
                 continue
             try:
                 content = orch_path.read_text(encoding="utf-8", errors="replace")
-                warehouse_names = ORCH_WAREHOUSE_RE.findall(content)
+                active_content = _strip_sql_comments(content)
+                warehouse_names = ORCH_WAREHOUSE_RE.findall(active_content)
                 if not warehouse_names:
                     continue
                 unique_names = sorted(set(wh.upper() for wh in warehouse_names))
