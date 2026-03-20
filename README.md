@@ -7,12 +7,17 @@ Community-contributed skills for AI coding agents. Each skill teaches an agent h
 <!-- BEGIN_SKILLS_TABLE -->
 | Skill | What it does |
 |-------|-------------|
-| [docker-dev-setup](docker-dev-setup/) | Containerize an application with a production-grade Dockerfile, Docker Compose for local development, and optional Dev Container configuration |
-| [drizzle-orm-setup](drizzle-orm-setup/) | Scaffold a Drizzle ORM project with TypeScript schema, relations, database client, and migrations |
-| [supabase-auth-rls](supabase-auth-rls/) | Scaffold a Supabase project with database schema, Row Level Security policies, and auth integration |
+| [snowflake-best-practices](snowflake-best-practices/) | 25 production rules for warehouse sizing, clustering, query optimization, data loading, semi-structured data, and cost control |
+| [dynamic-tables](dynamic-tables/) | Declarative data pipelines with automatic incremental refresh, replacing complex Streams + Tasks patterns |
+| [cortex-ai-functions](cortex-ai-functions/) | SQL-native AI/LLM functions — classify, extract, summarize, translate, embed, and process documents without infrastructure |
+| [snowpark-python](snowpark-python/) | Build Snowpark Python apps — DataFrame API, UDFs, UDTFs, stored procedures running inside Snowflake |
+| [snowflake-postgres](snowflake-postgres/) | Managed PostgreSQL with pg_lake (Iceberg tables), pg_incremental, and zero-ETL bridge to Snowflake analytics |
 | [snowpipe-streaming-java](snowpipe-streaming-java/) | Stream data into Snowflake using the Java Snowpipe Streaming SDK |
 | [snowpipe-streaming-python](snowpipe-streaming-python/) | Stream data into Snowflake using the Python Snowpipe Streaming SDK |
 | [ssis-to-dbt-replatform-migration](ssis-to-dbt-replatform-migration/) | Validates, deploys, and operationalizes SnowConvert AI (SCAI) Replatform output — SSIS to dbt and Snowflake TASKs migrations |
+| [docker-dev-setup](docker-dev-setup/) | Containerize an application with a production-grade Dockerfile, Docker Compose for local development, and optional Dev Container configuration |
+| [drizzle-orm-setup](drizzle-orm-setup/) | Scaffold a Drizzle ORM project with TypeScript schema, relations, database client, and migrations |
+| [supabase-auth-rls](supabase-auth-rls/) | Scaffold a Supabase project with database schema, Row Level Security policies, and auth integration |
 <!-- END_SKILLS_TABLE -->
 
 ## Skill Structure
@@ -40,6 +45,16 @@ description: "Brief description. Triggers: keyword1, keyword2."
 The body contains step-by-step instructions, tool usage, and validation steps. Additional files (scripts, references, templates) are loaded on demand — only what's needed enters the agent's context.
 
 ## Getting Started
+
+### One-Command Install
+
+```bash
+npx skills add Snowflake-Labs/agent-skills
+```
+
+This uses the [skills.sh](https://skills.sh) CLI to auto-discover and install all SKILL.md files from this repo into your project.
+
+### Manual Install
 
 Clone the repo and copy any skill into your project or agent's skill directory:
 

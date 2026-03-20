@@ -1,0 +1,155 @@
+{
+  "facts": {
+    "cluster-key-cardinality.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/tables-clustering-keys"
+      ]
+    },
+    "cluster-key-filter-alignment.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/tables-clustering-keys"
+      ]
+    },
+    "cluster-key-when-to-cluster.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/tables-auto-reclustering"
+      ]
+    },
+    "cost-credit-aware-design.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/cost-understanding-compute"
+      ]
+    },
+    "cost-resource-monitors.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/resource-monitors"
+      ]
+    },
+    "cost-warehouse-timeouts.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/sql-reference/parameters#statement-timeout-in-seconds"
+      ]
+    },
+    "load-copy-vs-snowpipe.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/data-load-overview"
+      ]
+    },
+    "load-file-sizing.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/data-load-considerations-prepare"
+      ]
+    },
+    "load-format-options.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/sql-reference/sql/create-file-format"
+      ]
+    },
+    "load-staging-patterns.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/data-load-local-file-system-create-stage"
+      ]
+    },
+    "query-avoid-select-star.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/performance-query"
+      ]
+    },
+    "query-filter-on-cluster-keys.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/tables-clustering-micropartitions#query-pruning"
+      ]
+    },
+    "query-pruning-aware-joins.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/performance-query#join-optimization"
+      ]
+    },
+    "query-result-cache.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/querying-persisted-results"
+      ]
+    },
+    "query-use-qualify.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/sql-reference/constructs/qualify"
+      ]
+    },
+    "semi-dot-notation.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/querying-semistructured#traversing-semi-structured-data"
+      ]
+    },
+    "semi-lateral-flatten.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/sql-reference/functions/flatten"
+      ]
+    },
+    "semi-variant-vs-flatten.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/querying-semistructured"
+      ]
+    },
+    "types-timestamp-variants.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/sql-reference/data-types-datetime#timestamp"
+      ]
+    },
+    "types-use-appropriate-types.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/sql-reference/data-types"
+      ]
+    },
+    "types-varchar-sizing.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/sql-reference/data-types-text#varchar"
+      ]
+    },
+    "warehouse-auto-suspend.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/warehouses-overview#auto-suspension-and-auto-resumption"
+      ]
+    },
+    "warehouse-query-acceleration.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/query-acceleration-service"
+      ]
+    },
+    "warehouse-right-sizing.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/warehouses-considerations"
+      ]
+    },
+    "warehouse-scale-up-vs-out.md": {
+      "last_verified": "2026-03-20T21:17:38.730673+00:00",
+      "references": [
+        "https://docs.snowflake.com/en/user-guide/warehouses-multicluster"
+      ]
+    }
+  },
+  "last_full_review": "2026-03-20T21:17:38.730673+00:00"
+}

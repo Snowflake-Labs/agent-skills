@@ -42,10 +42,9 @@ check() {
     fi
   fi
 
-  # 5. README.md exists
+  # 5. README.md exists (warning only — SKILL.md can serve both purposes)
   if [[ ! -f "$skill_dir/README.md" ]]; then
-    echo "  FAIL: README.md not found"
-    ok=false
+    echo "  WARN: README.md not found (optional if SKILL.md covers human docs)"
   fi
 
   # 6. No credential files
