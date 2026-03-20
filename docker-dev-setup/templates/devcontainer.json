@@ -1,0 +1,69 @@
+{
+  // Dev Container configuration for VS Code / GitHub Codespaces.
+  // Docs: https://containers.dev/implementors/json_reference/
+  //
+  // Copy .devcontainer/ directory to your project root.
+  // VS Code will prompt "Reopen in Container" when it detects this file.
+
+  "name": "Dev Container",
+
+  // Option A: Use a pre-built image (fastest startup)
+  // "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+
+  // Option B: Build from your Dockerfile
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "..",
+    "target": "deps"
+  },
+
+  // Option C: Use Docker Compose (for multi-service projects)
+  // "dockerComposeFile": "../compose.yaml",
+  // "service": "app",
+  // "workspaceFolder": "/app",
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+
+  // Ports to forward from the container to the host
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Application",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // Commands to run at different lifecycle stages
+  "postCreateCommand": "npm install",
+  // "postStartCommand": "npm run dev",
+
+  // Environment variables
+  "containerEnv": {
+    "NODE_ENV": "development"
+  },
+
+  // Run as non-root (recommended)
+  "remoteUser": "node",
+
+  // Dev Container Features — install additional tools
+  // Browse: https://containers.dev/features
+  "features": {
+    // Uncomment as needed:
+    // "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    // "ghcr.io/devcontainers/features/github-cli:1": {},
+    // "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
+  }
+}

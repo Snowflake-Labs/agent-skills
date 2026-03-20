@@ -1,0 +1,79 @@
+# .dockerignore — Universal template
+# Copy to project root as ".dockerignore" and customize for your stack.
+
+# Version control
+.git
+.gitignore
+.gitattributes
+.github
+
+# Docker files (prevent recursive includes)
+Dockerfile*
+compose*.yaml
+compose*.yml
+docker-compose*.yml
+.dockerignore
+
+# Dependencies (reinstalled in container)
+node_modules
+.pnp.*
+.yarn/*
+vendor
+
+# Python
+__pycache__
+*.py[cod]
+*.pyo
+.venv
+venv
+.Python
+*.egg-info
+
+# Build output (regenerated in container)
+dist
+build
+out
+target
+*.egg
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Test and coverage
+coverage
+.coverage
+.nyc_output
+.pytest_cache
+htmlcov
+*.lcov
+jest.config.*
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+.npmrc
+
+# Documentation (not needed in image)
+*.md
+LICENSE
+CHANGELOG*
+
+# Logs
+*.log
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# CI/CD
+.circleci
+.gitlab-ci.yml
+Jenkinsfile
