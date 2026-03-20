@@ -38,9 +38,16 @@ The body contains step-by-step instructions, tool usage, and validation steps. A
 
 ## Getting Started
 
-### Install via remote sync (recommended)
+Clone the repo and copy the skill(s) you need into your agent's skill directory:
 
-Add skills to `~/.snowflake/cortex/skills.json`:
+```bash
+git clone https://github.com/Snowflake-Labs/agent-skills.git
+cp -r agent-skills/<skill-name> /path/to/your/agent/skills/<skill-name>
+```
+
+### Cortex Code
+
+Add skills to `~/.snowflake/cortex/skills.json` for auto-sync:
 
 ```json
 {
@@ -54,22 +61,7 @@ Add skills to `~/.snowflake/cortex/skills.json`:
 }
 ```
 
-Skills auto-sync at session start.
-
-### Install manually
-
-```bash
-git clone https://github.com/Snowflake-Labs/agent-skills.git
-cp -r agent-skills/<skill-name> ~/.snowflake/cortex/skills/<skill-name>
-```
-
-### Verify
-
-Run `/skill` in a session — installed skills appear under **Global** or **Remote**. Or invoke directly:
-
-```
-$<skill-name>
-```
+Run `/skill` in a session to confirm installation, or invoke directly with `$<skill-name>`.
 
 ## Prerequisites
 
