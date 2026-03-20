@@ -29,20 +29,16 @@ cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .cursor/rules/doc
 
 ## Available Skills
 
-### 🔧 Development
-
-- **[docker-dev-setup](docker-dev-setup/)** — Containerize apps with production-grade Dockerfiles, Docker Compose for local dev, and Dev Container configuration
-- **[drizzle-orm-setup](drizzle-orm-setup/)** — Scaffold Drizzle ORM with TypeScript schema, relations, database client, and migrations
-- **[supabase-auth-rls](supabase-auth-rls/)** — Scaffold Supabase with database schema, Row Level Security policies, and auth integration
-
-### ❄️ Data Engineering
-
-- **[snowpipe-streaming-java](snowpipe-streaming-java/)** — Stream data into Snowflake using the Java Snowpipe Streaming SDK with exactly-once delivery
-- **[snowpipe-streaming-python](snowpipe-streaming-python/)** — Stream data into Snowflake using the Python Snowpipe Streaming SDK with parallel channels
-
-### 🔄 Migration
-
-- **[ssis-to-dbt-replatform-migration](ssis-to-dbt-replatform-migration/)** — Validate, deploy, and operationalize SnowConvert AI Replatform output — SSIS to dbt and Snowflake TASKs
+<!-- BEGIN_SKILLS_TABLE -->
+| Skill | What it does |
+|-------|-------------|
+| [docker-dev-setup](docker-dev-setup/) | Containerize an application with a production-grade Dockerfile, Docker Compose for local development, and optional Dev Container configuration |
+| [drizzle-orm-setup](drizzle-orm-setup/) | Scaffold a Drizzle ORM project with TypeScript schema, relations, database client, and migrations |
+| [snowpipe-streaming-java](snowpipe-streaming-java/) | Stream data into Snowflake using the Java Snowpipe Streaming SDK |
+| [snowpipe-streaming-python](snowpipe-streaming-python/) | Stream data into Snowflake using the Python Snowpipe Streaming SDK |
+| [ssis-to-dbt-replatform-migration](ssis-to-dbt-replatform-migration/) | Validates, deploys, and operationalizes SnowConvert AI (SCAI) Replatform output — SSIS to dbt and Snowflake TASKs migrations |
+| [supabase-auth-rls](supabase-auth-rls/) | Scaffold a Supabase project with database schema, Row Level Security policies, and auth integration |
+<!-- END_SKILLS_TABLE -->
 
 ## Skill Structure
 

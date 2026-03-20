@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Scans */SKILL.md, extracts YAML frontmatter, and regenerates the skills
-# table in README.md between the BEGIN/END markers.
+# Scans snowflake-skills/*/SKILL.md, extracts YAML frontmatter, and regenerates
+# the skills table in snowflake-skills/README.md between the BEGIN/END markers.
 #
 # Exit codes:
 #   0 — README was updated (or already up to date)
@@ -9,7 +9,7 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-README="README.md"
+README="snowflake-skills/README.md"
 BEGIN_MARKER="<!-- BEGIN_SKILLS_TABLE -->"
 END_MARKER="<!-- END_SKILLS_TABLE -->"
 
@@ -49,7 +49,9 @@ for skill_file in snowflake-skills/*/SKILL.md; do
     continue
   fi
 
-  rows+="| [$name]($dir/) | $desc |"$'\n'
+  # Use relative path from snowflake-skills/ for links
+  reldir="$(basename "$dir")"
+  rows+="| [$name]($reldir/) | $desc |"$'\n'
 done
 
 if [[ -z "$rows" ]]; then

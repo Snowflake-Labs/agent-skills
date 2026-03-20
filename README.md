@@ -15,6 +15,19 @@ Skills and tools for AI coding agents working with Snowflake. Give your agent (C
 
 ---
 
+## Pick Your Path
+
+| Adventure | Best For | Start Here |
+|-----------|----------|------------|
+| **Install AI Kit** | Add all Snowflake skills to your AI agent | [Quick Start](#quick-start) |
+| **Browse Skills** | Explore patterns and best practices | [`snowflake-skills/`](snowflake-skills/) |
+| **Builder App** | Chat with Claude + Snowflake tools in one UI | [`snowflake-builder-app/`](snowflake-builder-app/) |
+| **MCP Server** | Give your agent executable Snowflake tools | Coming soon |
+| **Tools Library** | Use Snowflake helpers in your Python code | Coming soon |
+| **Contribute** | Share your expertise with the community | [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+---
+
 ## Quick Start
 
 ### One-line install (Mac / Linux)
@@ -95,26 +108,12 @@ Add to `~/.snowflake/cortex/skills.json`:
 
 ## What's Included
 
-| Component | Description |
-|-----------|-------------|
-| [`snowflake-skills/`](snowflake-skills/) | Markdown skills teaching Snowflake and development patterns |
-
----
-
-## Skills
-
-<!-- BEGIN_SKILLS_TABLE -->
-| Skill | What it does |
-|-------|-------------|
-| [docker-dev-setup](snowflake-skills/docker-dev-setup/) | Containerize an application with a production-grade Dockerfile, Docker Compose for local development, and optional Dev Container configuration |
-| [drizzle-orm-setup](snowflake-skills/drizzle-orm-setup/) | Scaffold a Drizzle ORM project with TypeScript schema, relations, database client, and migrations |
-| [snowpipe-streaming-java](snowflake-skills/snowpipe-streaming-java/) | Stream data into Snowflake using the Java Snowpipe Streaming SDK |
-| [snowpipe-streaming-python](snowflake-skills/snowpipe-streaming-python/) | Stream data into Snowflake using the Python Snowpipe Streaming SDK |
-| [ssis-to-dbt-replatform-migration](snowflake-skills/ssis-to-dbt-replatform-migration/) | Validates, deploys, and operationalizes SnowConvert AI (SCAI) Replatform output — SSIS to dbt and Snowflake TASKs migrations |
-| [supabase-auth-rls](snowflake-skills/supabase-auth-rls/) | Scaffold a Supabase project with database schema, Row Level Security policies, and auth integration |
-<!-- END_SKILLS_TABLE -->
-
-See [`snowflake-skills/`](snowflake-skills/) for detailed descriptions, categories, and installation options.
+| Component | Description | Status |
+|-----------|-------------|--------|
+| [`snowflake-skills/`](snowflake-skills/) | Markdown skills teaching Snowflake patterns | 6 skills |
+| [`snowflake-builder-app/`](snowflake-builder-app/) | Claude Code agent UI with Snowflake MCP tools | Beta |
+| `snowflake-mcp/` | Standalone MCP server for Snowflake operations | Planned |
+| `snowflake-tools/` | Python library for common Snowflake tasks | Planned |
 
 ---
 

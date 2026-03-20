@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snowflake-mcp-server"
+version = "0.1.0"
+description = "MCP server providing Snowflake tools for AI coding agents"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp>=1.0.0",
+  "fastmcp>=0.1.0",
+  "snowflake-tools-core",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

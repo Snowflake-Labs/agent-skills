@@ -42,13 +42,13 @@ jobs:
 
       - name: Check skills table is up to date
         run: |
-          cp README.md README.md.bak
+          cp snowflake-skills/README.md snowflake-skills/README.md.bak
           .github/scripts/generate-skills-table.sh
-          if ! diff -q README.md README.md.bak > /dev/null 2>&1; then
-            echo "WARNING: Skills table in README.md is out of date."
+          if ! diff -q snowflake-skills/README.md snowflake-skills/README.md.bak > /dev/null 2>&1; then
+            echo "WARNING: Skills table in snowflake-skills/README.md is out of date."
             echo "It will be auto-updated when this PR merges to main."
           fi
-          mv README.md.bak README.md
+          mv snowflake-skills/README.md.bak snowflake-skills/README.md
 
       - name: Check agent rules are in sync
         run: |

@@ -1,0 +1,17 @@
+# FastAPI and server
+fastapi[standard]>=0.115.8
+uvicorn>=0.34.0
+httpx>=0.28.0
+pydantic>=2.10.0
+python-dotenv>=1.0.1
+
+# Snowflake
+snowflake-connector-python>=3.6.0
+
+# Claude Agent SDK
+claude-agent-sdk>=0.1.39
+anthropic>=0.42.0
+
+# MCP
+mcp>=1.0.0
+fastmcp>=0.1.0
