@@ -41,12 +41,16 @@ The body contains step-by-step instructions, tool usage, and validation steps. A
 
 ## Getting Started
 
-Clone the repo and copy the skill(s) you need into your agent's skill directory:
+Clone the repo and copy any skill into your project or agent's skill directory:
 
 ```bash
 git clone https://github.com/Snowflake-Labs/agent-skills.git
-cp -r agent-skills/<skill-name> /path/to/your/agent/skills/<skill-name>
+
+# Copy a skill into your project
+cp -r agent-skills/docker-dev-setup ./my-project/.agent-skills/docker-dev-setup
 ```
+
+These skills are **agent-agnostic** — they work with any AI coding agent that can read files. Each skill is just markdown + code templates, no proprietary format.
 
 ### Cortex Code
 
@@ -58,13 +62,45 @@ Add skills to `~/.snowflake/cortex/skills.json` for auto-sync:
     {
       "source": "https://github.com/Snowflake-Labs/agent-skills",
       "ref": "main",
-      "skills": [{ "name": "<skill-name>" }]
+      "skills": [
+        { "name": "docker-dev-setup" },
+        { "name": "drizzle-orm-setup" },
+        { "name": "supabase-auth-rls" }
+      ]
     }
   ]
 }
 ```
 
-Run `/skill` in a session to confirm installation, or invoke directly with `$<skill-name>`.
+Run `/skill` in a session to confirm installation, or invoke directly with `$docker-dev-setup`.
+
+### Cursor
+
+Add a skill's `SKILL.md` as a [project rule](https://docs.cursor.com/context/rules) (`.mdc` format):
+
+```bash
+cp agent-skills/docker-dev-setup/SKILL.md .cursor/rules/docker-dev-setup.mdc
+```
+
+### Windsurf
+
+Add to Windsurf's [rules directory](https://docs.windsurf.com/windsurf/cascade/memories):
+
+```bash
+cp agent-skills/docker-dev-setup/SKILL.md .windsurf/rules/docker-dev-setup.md
+```
+
+### Claude Code
+
+Add as a [project rule](https://code.claude.com/docs/en/memory):
+
+```bash
+cp agent-skills/docker-dev-setup/SKILL.md .claude/rules/docker-dev-setup.md
+```
+
+### Other Agents (Cline, Aider, etc.)
+
+Point the agent at the `SKILL.md` file directly, or paste its contents into the agent's system prompt / context window. The `references/` and `templates/` directories provide additional material the agent can load as needed.
 
 ## Prerequisites
 
