@@ -1,0 +1,2 @@
+# Optional: only needed for SQL validation (validate_sql.py)
+snowflake-connector-python>=3.0.0
