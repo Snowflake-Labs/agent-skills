@@ -110,7 +110,8 @@ Add to `~/.snowflake/cortex/skills.json`:
 
 | Component | Description | Status |
 |-----------|-------------|--------|
-| [`snowflake-skills/`](snowflake-skills/) | Markdown skills teaching Snowflake patterns | 6 skills |
+| [`snowflake-skills/`](snowflake-skills/) | Snowflake-specific skills (Snowpipe Streaming, ETL migration) | 3 skills |
+| [`general-skills/`](general-skills/) | General-purpose skills (Docker, Drizzle ORM, Supabase) | 3 skills |
 | [`snowflake-builder-app/`](snowflake-builder-app/) | Claude Code agent UI with Snowflake MCP tools | Beta |
 | `snowflake-mcp/` | Standalone MCP server for Snowflake operations | Planned |
 | `snowflake-tools/` | Python library for common Snowflake tasks | Planned |

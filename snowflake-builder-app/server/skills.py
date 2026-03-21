@@ -1,7 +1,7 @@
 """Skills management for the Snowflake Builder App.
 
-Copies skills from ../snowflake-skills/ into project directories so the
-claude-agent-sdk can load them via .claude/skills/.
+Copies skills from ../snowflake-skills/ and ../general-skills/ into project
+directories so the claude-agent-sdk can load them via .claude/skills/.
 """
 
 from __future__ import annotations
@@ -12,12 +12,15 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-REPO_SKILLS_DIR = Path(__file__).parent.parent.parent / "snowflake-skills"
-APP_SKILLS_DIR = Path(__file__).parent.parent / "skills"
+_REPO_ROOT = Path(__file__).parent.parent.parent
+SKILLS_DIRS = [
+    _REPO_ROOT / "snowflake-skills",
+    _REPO_ROOT / "general-skills",
+]
 
 
 def discover_skills(enabled: list[str] | None = None) -> list[dict]:
-    """Discover available skills from the snowflake-skills directory.
+    """Discover available skills from snowflake-skills and general-skills.
 
     Args:
         enabled: Optional list of skill folder names to include.
@@ -28,28 +31,29 @@ def discover_skills(enabled: list[str] | None = None) -> list[dict]:
     """
     skills = []
 
-    if not REPO_SKILLS_DIR.exists():
-        logger.warning(f"Skills directory not found: {REPO_SKILLS_DIR}")
-        return skills
-
-    for skill_dir in sorted(REPO_SKILLS_DIR.iterdir()):
-        if not skill_dir.is_dir():
-            continue
-        if skill_dir.name.startswith(".") or skill_dir.name == "TEMPLATE":
+    for skills_dir in SKILLS_DIRS:
+        if not skills_dir.exists():
+            logger.warning(f"Skills directory not found: {skills_dir}")
             continue
 
-        skill_md = skill_dir / "SKILL.md"
-        if not skill_md.exists():
-            continue
+        for skill_dir in sorted(skills_dir.iterdir()):
+            if not skill_dir.is_dir():
+                continue
+            if skill_dir.name.startswith(".") or skill_dir.name == "TEMPLATE":
+                continue
 
-        if enabled and skill_dir.name not in enabled:
-            continue
+            skill_md = skill_dir / "SKILL.md"
+            if not skill_md.exists():
+                continue
 
-        skills.append({
-            "name": skill_dir.name,
-            "path": str(skill_dir),
-            "has_skill_md": True,
-        })
+            if enabled and skill_dir.name not in enabled:
+                continue
+
+            skills.append({
+                "name": skill_dir.name,
+                "path": str(skill_dir),
+                "has_skill_md": True,
+            })
 
     return skills
 

@@ -24,7 +24,7 @@ curl -sSL .../snowflake-skills/install_skills.sh | bash -s -- --list
 ```bash
 git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
 mkdir -p .cursor/rules
-cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .cursor/rules/docker-dev-setup.mdc
+cp snowflake-ai-kit/snowflake-skills/snowpipe-streaming-python/SKILL.md .cursor/rules/snowpipe-streaming-python.mdc
 ```
 
 ## Available Skills
@@ -32,12 +32,9 @@ cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .cursor/rules/doc
 <!-- BEGIN_SKILLS_TABLE -->
 | Skill | What it does |
 |-------|-------------|
-| [docker-dev-setup](docker-dev-setup/) | Containerize an application with a production-grade Dockerfile, Docker Compose for local development, and optional Dev Container configuration |
-| [drizzle-orm-setup](drizzle-orm-setup/) | Scaffold a Drizzle ORM project with TypeScript schema, relations, database client, and migrations |
 | [snowpipe-streaming-java](snowpipe-streaming-java/) | Stream data into Snowflake using the Java Snowpipe Streaming SDK |
 | [snowpipe-streaming-python](snowpipe-streaming-python/) | Stream data into Snowflake using the Python Snowpipe Streaming SDK |
 | [ssis-to-dbt-replatform-migration](ssis-to-dbt-replatform-migration/) | Validates, deploys, and operationalizes SnowConvert AI (SCAI) Replatform output — SSIS to dbt and Snowflake TASKs migrations |
-| [supabase-auth-rls](supabase-auth-rls/) | Scaffold a Supabase project with database schema, Row Level Security policies, and auth integration |
 <!-- END_SKILLS_TABLE -->
 
 ## Skill Structure

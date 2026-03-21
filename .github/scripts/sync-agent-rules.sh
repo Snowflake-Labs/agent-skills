@@ -18,7 +18,8 @@ mkdir -p .cursor/rules .windsurf/rules .claude/rules
 rm -f .cursor/rules/*.mdc .windsurf/rules/*.md .claude/rules/*.md
 
 synced=0
-for skill_file in snowflake-skills/*/SKILL.md; do
+for skill_file in snowflake-skills/*/SKILL.md general-skills/*/SKILL.md; do
+  [[ -f "$skill_file" ]] || continue
   dir="$(dirname "$skill_file")"
   name="$(basename "$dir")"
 

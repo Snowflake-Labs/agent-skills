@@ -24,10 +24,17 @@ set -e
 G='\033[0;32m' Y='\033[1;33m' R='\033[0;31m' B='\033[1m' N='\033[0m'
 
 REPO_RAW="https://raw.githubusercontent.com/Snowflake-Labs/snowflake-ai-kit/main"
-SKILLS_PATH="snowflake-skills"
+SNOWFLAKE_SKILLS_PATH="snowflake-skills"
+GENERAL_SKILLS_PATH="general-skills"
+
+# Snowflake-specific skills
+SNOWFLAKE_SKILLS="snowpipe-streaming-java snowpipe-streaming-python ssis-to-dbt-replatform-migration"
+
+# General-purpose skills (not Snowflake-specific)
+GENERAL_SKILLS="docker-dev-setup drizzle-orm-setup supabase-auth-rls"
 
 # All available skills
-ALL_SKILLS="docker-dev-setup drizzle-orm-setup supabase-auth-rls snowpipe-streaming-java snowpipe-streaming-python ssis-to-dbt-replatform-migration"
+ALL_SKILLS="$SNOWFLAKE_SKILLS $GENERAL_SKILLS"
 
 msg()  { echo -e "  $*"; }
 ok()   { echo -e "  ${G}✓${N} $*"; }
@@ -59,12 +66,28 @@ get_skill_files() {
   esac
 }
 
+# Resolve the remote path for a skill (snowflake-skills/ or general-skills/)
+get_skill_path() {
+  case "$1" in
+    docker-dev-setup|drizzle-orm-setup|supabase-auth-rls) echo "$GENERAL_SKILLS_PATH" ;;
+    *) echo "$SNOWFLAKE_SKILLS_PATH" ;;
+  esac
+}
+
 show_list() {
   echo ""
-  echo -e "${B}Available Snowflake Skills${N}"
+  echo -e "${B}Snowflake Skills${N}"
   echo "──────────────────────────────"
   echo ""
-  for skill in $ALL_SKILLS; do
+  for skill in $SNOWFLAKE_SKILLS; do
+    desc=$(get_skill_description "$skill")
+    printf "  ${B}%-38s${N} %s\n" "$skill" "$desc"
+  done
+  echo ""
+  echo -e "${B}General-Purpose Skills${N}"
+  echo "──────────────────────────────"
+  echo ""
+  for skill in $GENERAL_SKILLS; do
     desc=$(get_skill_description "$skill")
     printf "  ${B}%-38s${N} %s\n" "$skill" "$desc"
   done
@@ -88,10 +111,13 @@ install_skill_for_agent() {
     *) die "Unknown agent: $agent" ;;
   esac
 
+  local skills_path
+  skills_path=$(get_skill_path "$skill")
+
   if [[ "$agent" == "cortex" ]]; then
     # Cortex Code: download entire skill directory
     mkdir -p "$target_dir"
-    curl -sSL "$REPO_RAW/$SKILLS_PATH/$skill/SKILL.md" -o "$target_dir/SKILL.md" 2>/dev/null || {
+    curl -sSL "$REPO_RAW/$skills_path/$skill/SKILL.md" -o "$target_dir/SKILL.md" 2>/dev/null || {
       warn "Failed to download $skill/SKILL.md"
       return 1
     }
@@ -102,13 +128,13 @@ install_skill_for_agent() {
       local dir
       dir=$(dirname "$target_dir/$f")
       mkdir -p "$dir"
-      curl -sSL "$REPO_RAW/$SKILLS_PATH/$skill/$f" -o "$target_dir/$f" 2>/dev/null || true
+      curl -sSL "$REPO_RAW/$skills_path/$skill/$f" -o "$target_dir/$f" 2>/dev/null || true
     done
   else
     # Other agents: copy SKILL.md as a rule file
     mkdir -p "$target_dir"
     local filename="${skill}${ext}"
-    curl -sSL "$REPO_RAW/$SKILLS_PATH/$skill/SKILL.md" -o "$target_dir/$filename" 2>/dev/null || {
+    curl -sSL "$REPO_RAW/$skills_path/$skill/SKILL.md" -o "$target_dir/$filename" 2>/dev/null || {
       warn "Failed to download $skill for $agent"
       return 1
     }

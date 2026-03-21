@@ -16,9 +16,9 @@ jobs:
       - name: Detect changed skill directories
         id: detect
         run: |
-          # Get unique skill dirs under snowflake-skills/ that were touched
+          # Get unique skill dirs under snowflake-skills/ or general-skills/ that were touched
           dirs=$(git diff --name-only origin/main...HEAD \
-            | grep '^snowflake-skills/' \
+            | grep -E '^(snowflake-skills|general-skills)/' \
             | cut -d'/' -f1-2 \
             | sort -u \
             | while read -r d; do
@@ -43,12 +43,18 @@ jobs:
       - name: Check skills table is up to date
         run: |
           cp snowflake-skills/README.md snowflake-skills/README.md.bak
+          cp general-skills/README.md general-skills/README.md.bak
           .github/scripts/generate-skills-table.sh
           if ! diff -q snowflake-skills/README.md snowflake-skills/README.md.bak > /dev/null 2>&1; then
             echo "WARNING: Skills table in snowflake-skills/README.md is out of date."
             echo "It will be auto-updated when this PR merges to main."
           fi
+          if ! diff -q general-skills/README.md general-skills/README.md.bak > /dev/null 2>&1; then
+            echo "WARNING: Skills table in general-skills/README.md is out of date."
+            echo "It will be auto-updated when this PR merges to main."
+          fi
           mv snowflake-skills/README.md.bak snowflake-skills/README.md
+          mv general-skills/README.md.bak general-skills/README.md
 
       - name: Check agent rules are in sync
         run: |

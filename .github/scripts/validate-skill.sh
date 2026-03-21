@@ -72,7 +72,8 @@ dirs=()
 if [[ $# -gt 0 ]]; then
   dirs=("$@")
 else
-  for skill_file in snowflake-skills/*/SKILL.md; do
+  for skill_file in snowflake-skills/*/SKILL.md general-skills/*/SKILL.md; do
+    [[ -f "$skill_file" ]] || continue
     dirs+=("$(dirname "$skill_file")")
   done
 fi
