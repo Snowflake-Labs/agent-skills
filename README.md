@@ -1,6 +1,6 @@
 # Snowflake AI Kit
 
-Skills and tools for AI coding agents working with Snowflake. Give your agent (Cortex Code, Cursor, Windsurf, Claude Code, etc.) the patterns and best practices it needs to build on Snowflake correctly.
+Skills, MCP tools, and a builder app for AI coding agents working with Snowflake. Give your agent (Cortex Code, Cursor, Windsurf, Claude Code, etc.) the patterns and best practices it needs to build on Snowflake correctly.
 
 ---
 
@@ -22,8 +22,8 @@ Skills and tools for AI coding agents working with Snowflake. Give your agent (C
 | **Install AI Kit** | Add all Snowflake skills to your AI agent | [Quick Start](#quick-start) |
 | **Browse Skills** | Explore patterns and best practices | [`snowflake-skills/`](snowflake-skills/) |
 | **Builder App** | Chat with Claude + Snowflake tools in one UI | [`snowflake-builder-app/`](snowflake-builder-app/) |
-| **MCP Server** | Give your agent executable Snowflake tools | Coming soon |
-| **Tools Library** | Use Snowflake helpers in your Python code | Coming soon |
+| **MCP Server** | Give your agent executable Snowflake tools | [`snowflake-builder-app/packages/`](snowflake-builder-app/packages/snowflake-mcp-server/) |
+| **Tools Library** | Use Snowflake helpers in your Python code | [`snowflake-tools-core/`](snowflake-builder-app/packages/snowflake-tools-core/) |
 | **Contribute** | Share your expertise with the community | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ---
@@ -113,8 +113,8 @@ Add to `~/.snowflake/cortex/skills.json`:
 | [`snowflake-skills/`](snowflake-skills/) | Snowflake-specific skills (Snowpipe Streaming, ETL migration) | 3 skills |
 | [`general-skills/`](general-skills/) | General-purpose skills (Docker, Drizzle ORM, Supabase) | 3 skills |
 | [`snowflake-builder-app/`](snowflake-builder-app/) | Claude Code agent UI with Snowflake MCP tools | Beta |
-| `snowflake-mcp/` | Standalone MCP server for Snowflake operations | Planned |
-| `snowflake-tools/` | Python library for common Snowflake tasks | Planned |
+| [`snowflake-builder-app/packages/snowflake-mcp-server/`](snowflake-builder-app/packages/snowflake-mcp-server/) | MCP server for Snowflake operations (bundled in builder app) | Beta |
+| [`snowflake-builder-app/packages/snowflake-tools-core/`](snowflake-builder-app/packages/snowflake-tools-core/) | Python library for common Snowflake tasks (bundled in builder app) | Beta |
 
 ---
 
