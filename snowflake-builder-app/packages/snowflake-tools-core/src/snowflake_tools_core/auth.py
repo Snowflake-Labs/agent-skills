@@ -22,6 +22,7 @@ class SnowflakeAuth:
     host: str
     token: str
     auth_type: str  # "pat" or "session_token"
+    user: str | None = None
     role: str | None = None
     warehouse: str | None = None
     database: str | None = None
@@ -49,6 +50,7 @@ def get_snowflake_auth() -> SnowflakeAuth:
         SNOWFLAKE_PAT - Programmatic Access Token
 
     Optional env vars:
+        SNOWFLAKE_USER - Username
         SNOWFLAKE_ROLE - Role to use
         SNOWFLAKE_WAREHOUSE - Warehouse to use
         SNOWFLAKE_DATABASE - Default database
@@ -63,6 +65,7 @@ def get_snowflake_auth() -> SnowflakeAuth:
             host=os.environ.get("SNOWFLAKE_HOST", ""),
             token=container_token,
             auth_type="session_token",
+            user=os.environ.get("SNOWFLAKE_USER"),
             role=os.environ.get("SNOWFLAKE_ROLE"),
             warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE"),
             database=os.environ.get("SNOWFLAKE_DATABASE"),
@@ -85,6 +88,7 @@ def get_snowflake_auth() -> SnowflakeAuth:
         host=host,
         token=pat,
         auth_type="pat",
+        user=os.environ.get("SNOWFLAKE_USER"),
         role=os.environ.get("SNOWFLAKE_ROLE"),
         warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE"),
         database=os.environ.get("SNOWFLAKE_DATABASE"),

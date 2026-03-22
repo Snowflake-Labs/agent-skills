@@ -1,80 +1,103 @@
 """Snowflake MCP server for Claude Code agent integration.
 
-Exposes Snowflake tools as MCP tools that can be loaded by claude-agent-sdk.
-Tools are prefixed as mcp__snowflake__<tool_name>.
+Runs as a stdio MCP server process, exposing Snowflake tools via the
+Model Context Protocol. Designed to be launched by claude-agent-sdk as:
+
+    python -m snowflake_mcp_server
 """
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
-from typing import Any
+from typing import Any, Optional
+
+from fastmcp import FastMCP
 
 from snowflake_mcp_server.tool_registry import get_all_tools
 
 logger = logging.getLogger(__name__)
 
 
-def create_mcp_server(name: str = "snowflake") -> dict[str, Any]:
-    """Create an MCP server config for claude-agent-sdk.
+def create_stdio_server() -> FastMCP:
+    """Build a FastMCP server with all Snowflake tools registered."""
+    server = FastMCP("snowflake")
 
-    This returns the configuration dict that can be passed to
-    ClaudeAgentOptions(mcp_servers={...}).
-
-    For in-process usage with claude-agent-sdk's create_sdk_mcp_server:
-        from claude_agent_sdk import create_sdk_mcp_server
-        server = create_sdk_mcp_server(name='snowflake', tools=get_sdk_tools())
-
-    Returns:
-        MCP server configuration dict.
-    """
-    return {
-        "name": name,
-        "tools": get_sdk_tools(),
-    }
-
-
-def get_sdk_tools() -> list[dict[str, Any]]:
-    """Convert tool registry to claude-agent-sdk compatible tool definitions.
-
-    Returns:
-        List of tool dicts with name, description, input_schema, and handler.
-    """
     registry = get_all_tools()
-    tools = []
-
     for tool_name, tool_def in registry.items():
-        tools.append({
-            "name": tool_name,
-            "description": tool_def["description"],
-            "input_schema": tool_def["input_schema"],
-            "handler": _make_handler(tool_def["fn"], tool_def["input_schema"]),
-        })
+        _register_tool(server, tool_name, tool_def)
 
-    return tools
+    return server
 
 
-def _make_handler(fn, schema: dict[str, Any]):
-    """Create a handler function that maps MCP input to tool function args."""
+def _py_type(json_type: str):
+    """Map JSON schema type to Python type annotation."""
+    return {
+        "string": str,
+        "integer": int,
+        "number": float,
+        "boolean": bool,
+        "array": list,
+        "object": dict,
+    }.get(json_type, str)
 
-    def handler(input_data: dict[str, Any]) -> str:
-        try:
-            # Extract required and optional params from schema
-            props = schema.get("properties", {})
-            kwargs = {}
-            for param_name in props:
-                if param_name in input_data:
-                    kwargs[param_name] = input_data[param_name]
 
-            result = fn(**kwargs)
-            if isinstance(result, str):
-                return result
-            return json.dumps(result, default=str)
-        except Exception as e:
-            logger.exception(f"Tool execution failed: {fn.__name__}")
-            return json.dumps({"error": str(e)})
+def _register_tool(
+    server: FastMCP,
+    name: str,
+    tool_def: dict[str, Any],
+) -> None:
+    """Register a single tool from the registry onto the FastMCP server."""
+    fn = tool_def["fn"]
+    description = tool_def["description"]
+    schema = tool_def["input_schema"]
+    props = schema.get("properties", {})
+    required = set(schema.get("required", []))
 
-    return handler
+    # Build an explicit signature FastMCP can parse (no **kwargs).
+    params = []
+    annotations: dict[str, Any] = {}
+    for p_name, p_info in props.items():
+        py_type = _py_type(p_info.get("type", "string"))
+        if p_name in required:
+            params.append(
+                inspect.Parameter(p_name, inspect.Parameter.KEYWORD_ONLY, annotation=py_type)
+            )
+        else:
+            params.append(
+                inspect.Parameter(
+                    p_name,
+                    inspect.Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Optional[py_type],
+                )
+            )
+        annotations[p_name] = params[-1].annotation
+    annotations["return"] = str
+    sig = inspect.Signature(params, return_annotation=str)
+
+    # Build the handler with its own closure over fn/props
+    def _make_handler(_fn=fn, _props=props):
+        async def handler(**kwargs: Any) -> str:
+            try:
+                filtered = {k: v for k, v in kwargs.items() if k in _props and v is not None}
+                result = _fn(**filtered)
+                if isinstance(result, str):
+                    return result
+                return json.dumps(result, default=str)
+            except Exception as e:
+                logger.exception(f"Tool execution failed: {_fn.__name__}")
+                return json.dumps({"error": str(e)})
+
+        handler.__name__ = name
+        handler.__qualname__ = name
+        handler.__doc__ = description
+        handler.__signature__ = sig
+        handler.__annotations__ = annotations
+        return handler
+
+    server.add_tool(_make_handler())
 
 
 def get_allowed_tools(prefix: str = "mcp__snowflake") -> list[str]:

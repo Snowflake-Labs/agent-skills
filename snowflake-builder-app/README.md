@@ -35,7 +35,7 @@ A web application that provides a Claude Code agent interface with integrated Sn
 │                                          ▼                                 │
 │                               ┌──────────────────────┐                     │
 │                               │ snowflake-mcp-server  │                    │
-│                               │ (in-process SDK tools)│                    │
+│                               │ (stdio subprocess)    │                    │
 │                               └──────────────────────┘                     │
 └─────────────────────────────────────────────────────────────────────────────┘
                                              │
@@ -56,12 +56,19 @@ When a user sends a message, the backend creates a Claude Code session using the
 ```python
 from claude_agent_sdk import ClaudeAgentOptions, query
 
+# MCP server runs as a stdio subprocess with Snowflake creds in env
+mcp_config = {
+    "command": sys.executable,
+    "args": ["-m", "snowflake_mcp_server"],
+    "env": config.get_snowflake_env(),  # SNOWFLAKE_HOST, _ACCOUNT, _USER, _PAT
+}
+
 options = ClaudeAgentOptions(
     cwd=str(project_dir),
-    allowed_tools=[*snowflake_tools, "Read", "Write", "Edit", "Glob", "Grep"],
+    allowed_tools=[*snowflake_tools, "Read", "Write", "Edit", "Glob", "Grep", "Skill"],
     permission_mode="bypassPermissions",
     resume=session_id,
-    mcp_servers={"snowflake": snowflake_mcp_server},
+    mcp_servers={"snowflake": mcp_config},
     system_prompt=system_prompt,
 )
 
@@ -80,8 +87,11 @@ Key features:
 Production (Container Runtime)          Development (Local)
 ┌──────────────────────────┐            ┌──────────────────────────┐
 │ /snowflake/session/token │            │ SNOWFLAKE_PAT env var    │
-└─────────────┬────────────┘            └─────────────┬────────────┘
-              └──────────────┬────────────────────────┘
+└─────────────┬────────────┘            │   — or —                 │
+              │                         │ SNOWFLAKE_CONNECTION_NAME │
+              │                         │ → ~/.snowflake/           │
+              │                         │   connections.toml        │
+              └──────────────┬──────────┴──────────────────────────┘
                              ▼
               ┌──────────────────────────┐
               │ get_snowflake_auth()     │
@@ -91,6 +101,8 @@ Production (Container Runtime)          Development (Local)
 ```
 
 ### 3. MCP Tools (Snowflake)
+
+> **Note**: This app ships its own lightweight MCP server (`packages/snowflake-mcp-server/`) that runs as a local stdio subprocess. It is **not** the [Snowflake managed MCP server](https://docs.snowflake.com/en/user-guide/snowflake-mcp) (a native Snowflake object) or the [Snowflake-Labs/mcp](https://github.com/Snowflake-Labs/mcp) open-source server. The bundled server is purpose-built for this app's tool set and requires no pre-configured Snowflake MCP server object.
 
 Tools exposed as `mcp__snowflake__<tool_name>`:
 
@@ -133,11 +145,19 @@ cd snowflake-builder-app
 
 ### 2. Configure credentials
 
-Edit `.env.local` with your Snowflake and Anthropic credentials:
+**Option A**: Set `SNOWFLAKE_CONNECTION_NAME` to use an existing `~/.snowflake/connections.toml` entry:
+
+```env
+SNOWFLAKE_CONNECTION_NAME=myconnection
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+**Option B**: Set credentials directly as env vars:
 
 ```env
 SNOWFLAKE_HOST=myaccount.snowflakecomputing.com
 SNOWFLAKE_ACCOUNT=myaccount
+SNOWFLAKE_USER=myuser
 SNOWFLAKE_PAT=pat_...
 ANTHROPIC_API_KEY=sk-ant-...
 ```
@@ -176,7 +196,8 @@ snowflake-builder-app/
 │   │       └── tools/               # SQL, catalog, stage, pipeline, cortex
 │   └── snowflake-mcp-server/        # MCP server wrapping tools
 │       └── src/snowflake_mcp_server/
-│           ├── server.py            # MCP server factory
+│           ├── __main__.py          # Entry point: python -m snowflake_mcp_server
+│           ├── server.py            # FastMCP stdio server factory
 │           └── tool_registry.py     # Tool definitions + schemas
 ├── scripts/
 │   ├── setup.sh                     # One-click setup

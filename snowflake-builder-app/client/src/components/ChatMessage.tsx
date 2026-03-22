@@ -1,7 +1,6 @@
 import React from 'react';
 import type { ChatMessage as ChatMessageType } from '../types/agent';
 import { ThinkingBlock } from './ThinkingBlock';
-import { ToolOutput } from './ToolOutput';
 
 interface Props {
   message: ChatMessageType;
@@ -15,8 +14,7 @@ export function ChatMessage({ message }: Props) {
   return (
     <div className={`chat-message ${message.role}`}>
       <div className="role-label">{message.role === 'user' ? 'You' : 'Snowflake Agent'}</div>
-      {thinkingText && <ThinkingBlock content={thinkingText} />}
-      {toolEvents.length > 0 && <ToolOutput events={toolEvents} />}
+      <ThinkingBlock content={thinkingText} toolEvents={toolEvents} />
       <div dangerouslySetInnerHTML={{ __html: simpleMarkdown(message.content) }} />
     </div>
   );

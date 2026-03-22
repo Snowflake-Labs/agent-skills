@@ -38,6 +38,9 @@ dependency-reduced-pom.xml
 # Node
 node_modules/
 
+# Builder app runtime data
+snowflake-builder-app/projects/
+
 # OS
 .DS_Store
 Thumbs.db

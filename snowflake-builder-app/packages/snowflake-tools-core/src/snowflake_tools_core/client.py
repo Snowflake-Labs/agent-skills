@@ -29,12 +29,15 @@ class SnowflakeClient:
             "host": self._auth.host,
         }
 
+        if self._auth.user:
+            connect_params["user"] = self._auth.user
+
         if self._auth.auth_type == "session_token":
             connect_params["token"] = self._auth.token
             connect_params["authenticator"] = "oauth"
         else:
-            connect_params["token"] = self._auth.token
-            connect_params["authenticator"] = "oauth"
+            # PAT — pass as password and let the connector auto-detect
+            connect_params["password"] = self._auth.token
 
         if self._auth.role:
             connect_params["role"] = self._auth.role

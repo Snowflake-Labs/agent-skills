@@ -37,8 +37,10 @@ fi
 echo "Installing Python dependencies..."
 if command -v uv &>/dev/null; then
   uv pip install -r requirements.txt
+  uv pip install -e packages/snowflake-tools-core -e packages/snowflake-mcp-server
 else
   pip install -r requirements.txt
+  pip install -e packages/snowflake-tools-core -e packages/snowflake-mcp-server
 fi
 echo ""
 
