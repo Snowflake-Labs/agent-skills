@@ -1,6 +1,12 @@
 # Snowflake Builder App
 
-A web application that provides a Claude Code agent interface with integrated Snowflake tools. Users interact with Claude through a chat interface, and the agent can execute SQL queries, explore schemas, manage pipelines, upload files, and more on their Snowflake workspace.
+A web-based Claude Code agent with Snowflake tools baked in. Describe what you want to build, and the agent creates it on your Snowflake account.
+
+- **No local setup for end users** — no CLI, no terminal. Open a browser, start chatting.
+- **Snowflake tooling pre-wired** — `execute_sql`, `describe_table`, `cortex_complete`, and more via a bundled MCP server. No tool configuration needed.
+- **Skills pre-loaded** — Snowpipe streaming, Docker, Drizzle ORM, and other skills available out of the box.
+- **Project isolation** — each project gets its own working directory and conversation history.
+- **Deployable to Snowflake Container Runtime** — runs inside Snowflake with automatic session token auth. No credentials to manage.
 
 ## Architecture Overview
 
