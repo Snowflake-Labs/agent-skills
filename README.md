@@ -141,8 +141,6 @@ See [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) for details.
 | [`general-skills/`](general-skills/) | General-purpose skills (Docker, Drizzle ORM, Supabase) |
 | [`builder-apps/claude-agent/`](builder-apps/claude-agent/) | Claude Code agent UI with Snowflake MCP tools |
 | [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) | Cortex Agent chat UI — no API key needed |
-| [`builder-apps/claude-agent/packages/snowflake-mcp-server/`](builder-apps/claude-agent/packages/snowflake-mcp-server/) | MCP server for Snowflake operations (bundled in claude-agent) |
-| [`builder-apps/claude-agent/packages/snowflake-tools-core/`](builder-apps/claude-agent/packages/snowflake-tools-core/) | Python library for common Snowflake tasks (bundled in claude-agent) |
 
 ---
 
