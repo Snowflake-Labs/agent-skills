@@ -1,6 +1,6 @@
 # Contributing to Snowflake AI Kit
 
-We welcome contributions from the community. Whether it's a new skill, a bug fix, or improved documentation — PRs are appreciated.
+We welcome contributions from the community — new skills, builder app improvements, bug fixes, or documentation.
 
 ## Development Setup
 
@@ -43,6 +43,19 @@ We welcome contributions from the community. Whether it's a new skill, a bug fix
    .github/scripts/validate-skill.sh snowflake-skills/my-skill-name
    ```
 
+## Contributing to Builder Apps
+
+Builder apps live under `builder-apps/`. Each app has its own README with setup instructions.
+
+- **`builder-apps/claude-agent/`** — Claude Code agent with Snowflake MCP tools
+- **`builder-apps/cortex-agent/`** — Cortex Agent chat UI
+
+When contributing to builder apps:
+- Follow the existing code patterns in the app you're modifying
+- Test both backend and frontend changes from the browser (not just curl)
+- Never commit credentials, `.env` files, or API keys
+- Keep `projects/` directories out of version control (gitignored)
+
 ## Skill Standards
 
 - **YAML frontmatter** — every `SKILL.md` must have `name` and `description`
@@ -61,7 +74,7 @@ We welcome contributions from the community. Whether it's a new skill, a bug fix
 
 1. Create a feature branch from `main`
 2. Make changes with clear, descriptive commits
-3. Run the validation script locally
+3. Run the validation script locally (for skills)
 4. Open a PR with:
    - Brief description of the skill or change
    - Why it's useful

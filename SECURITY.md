@@ -17,11 +17,12 @@ We will acknowledge receipt within 48 hours and provide a timeline for a fix.
 
 ## Scope
 
-This repository contains markdown skills and shell scripts — no server-side code or authentication flows. The primary security concerns are:
+This repository contains markdown skills, shell scripts, and builder apps (FastAPI + React). Security concerns include:
 
-- **Credential leakage** — skills and templates must never contain real tokens, keys, or passwords
+- **Credential leakage** — skills, templates, and app code must never contain real tokens, keys, or passwords
 - **Supply chain** — the install script downloads files from this GitHub repo; verify you're using the official `Snowflake-Labs/snowflake-ai-kit` source
 - **Code injection** — skills instruct AI agents to generate code; skill authors should avoid patterns that could lead to SQL injection, command injection, or XSS in generated code
+- **API security** — builder apps communicate with Snowflake APIs using PAT/password auth; credentials must only come from environment variables or Snowflake's built-in auth mechanisms
 
 ## Best Practices for Contributors
 
