@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = [".", "packages"]
+include = ["server*", "snowflake_tools_core*", "snowflake_mcp_server*"]
+exclude = ["client*", "tests*", "scripts*"]
+
+[project]
+name = "claude-agent-app"
+version = "0.1.0"
+description = "Claude Code agent interface with integrated Snowflake tools"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi[standard]>=0.115.8",
+  "python-dotenv>=1.0.1",
+  "uvicorn>=0.34.0",
+  "httpx>=0.28.0",
+  "pydantic>=2.10.0",
+  "snowflake-connector-python>=3.6.0",
+  # Claude Agent SDK
+  "claude-agent-sdk>=0.1.39",
+  "anthropic>=0.42.0",
+  # MCP
+  "mcp>=1.0.0",
+  "fastmcp>=0.1.0",
+]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.9.6",
+]
+
+[tool.ruff]
+src = ["server", "packages"]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

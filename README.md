@@ -1,6 +1,6 @@
 # Snowflake AI Kit
 
-Skills, MCP tools, and a builder app for AI coding agents working with Snowflake. Give your agent (Cortex Code, Cursor, Windsurf, Claude Code, etc.) the patterns and best practices it needs to build on Snowflake correctly.
+Skills, MCP tools, and builder apps for AI coding agents working with Snowflake. Give your agent ([Cortex Code](https://docs.snowflake.com/en/user-guide/cortex-code/cortex-code-cli), Cursor, Windsurf, Claude Code, etc.) the patterns and best practices it needs to build on Snowflake correctly.
 
 ---
 
@@ -21,16 +21,21 @@ Skills, MCP tools, and a builder app for AI coding agents working with Snowflake
 |-----------|----------|------------|
 | **Install AI Kit** | Add all Snowflake skills to your AI agent | [Quick Start](#quick-start) |
 | **Browse Skills** | Explore patterns and best practices | [`snowflake-skills/`](snowflake-skills/) |
-| **Builder App** | Chat with Claude + Snowflake tools in one UI | [`snowflake-builder-app/`](snowflake-builder-app/) |
-| **MCP Server** | Give your agent executable Snowflake tools | [`snowflake-builder-app/packages/`](snowflake-builder-app/packages/snowflake-mcp-server/) |
-| **Tools Library** | Use Snowflake helpers in your Python code | [`snowflake-tools-core/`](snowflake-builder-app/packages/snowflake-tools-core/) |
+| **Claude Agent App** | Chat with Claude + Snowflake tools in one UI | [`builder-apps/claude-agent/`](builder-apps/claude-agent/) |
+| **Cortex Agent App** | Chat with Cortex Agents — no API key needed | [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) |
+| **MCP Server** | Give your agent executable Snowflake tools | [`builder-apps/claude-agent/packages/`](builder-apps/claude-agent/packages/snowflake-mcp-server/) |
+| **Tools Library** | Use Snowflake helpers in your Python code | [`snowflake-tools-core/`](builder-apps/claude-agent/packages/snowflake-tools-core/) |
 | **Contribute** | Share your expertise with the community | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ---
 
 ## Quick Start
 
-### One-line install (Mac / Linux)
+### Install Skills
+
+Add Snowflake skills to your existing AI coding agent.
+
+**One-line install (Mac / Linux)**
 
 ```bash
 bash <(curl -sSL https://raw.githubusercontent.com/Snowflake-Labs/snowflake-ai-kit/main/snowflake-skills/install_skills.sh)
@@ -54,7 +59,8 @@ bash <(curl -sSL .../snowflake-skills/install_skills.sh) --list
 
 </details>
 
-### Manual install
+<details>
+<summary><strong>Manual install</strong></summary>
 
 Clone the repo and copy skills into your agent's rules directory:
 
@@ -62,32 +68,22 @@ Clone the repo and copy skills into your agent's rules directory:
 git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
 ```
 
-#### Cursor
-
+**Cursor**
 ```bash
 cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .cursor/rules/docker-dev-setup.mdc
 ```
 
-#### Windsurf
-
+**Windsurf**
 ```bash
 cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .windsurf/rules/docker-dev-setup.md
 ```
 
-#### Claude Code
-
+**Claude Code**
 ```bash
 cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .claude/rules/docker-dev-setup.md
 ```
 
-#### Other Agents (Cline, Aider, etc.)
-
-Point the agent at the `SKILL.md` file directly, or paste its contents into the agent's system prompt.
-
-#### Cortex Code
-
-Add to `~/.snowflake/cortex/skills.json`:
-
+**Cortex Code** — Add to `~/.snowflake/cortex/skills.json`:
 ```json
 {
   "remote": [
@@ -104,6 +100,36 @@ Add to `~/.snowflake/cortex/skills.json`:
 }
 ```
 
+**Other Agents (Cline, Aider, etc.)** — Point the agent at the `SKILL.md` file directly, or paste its contents into the agent's system prompt.
+
+</details>
+
+### Claude Agent App
+
+Chat with Claude + Snowflake MCP tools in a single UI. Requires an [Anthropic API key](https://console.anthropic.com/).
+
+```bash
+git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
+cd snowflake-ai-kit/builder-apps/claude-agent
+./scripts/setup.sh
+# Follow instructions to start the app
+```
+
+See [`builder-apps/claude-agent/`](builder-apps/claude-agent/) for details.
+
+### Cortex Agent App
+
+Chat with Snowflake Cortex Agents — no external API key needed, just a Snowflake account.
+
+```bash
+git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
+cd snowflake-ai-kit/builder-apps/cortex-agent
+./scripts/setup.sh
+# Follow instructions to start the app
+```
+
+See [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) for details.
+
 ---
 
 ## What's Included
@@ -112,9 +138,10 @@ Add to `~/.snowflake/cortex/skills.json`:
 |-----------|-------------|--------|
 | [`snowflake-skills/`](snowflake-skills/) | Snowflake-specific skills (Snowpipe Streaming, ETL migration) | 3 skills |
 | [`general-skills/`](general-skills/) | General-purpose skills (Docker, Drizzle ORM, Supabase) | 3 skills |
-| [`snowflake-builder-app/`](snowflake-builder-app/) | Claude Code agent UI with Snowflake MCP tools | Beta |
-| [`snowflake-builder-app/packages/snowflake-mcp-server/`](snowflake-builder-app/packages/snowflake-mcp-server/) | MCP server for Snowflake operations (bundled in builder app) | Beta |
-| [`snowflake-builder-app/packages/snowflake-tools-core/`](snowflake-builder-app/packages/snowflake-tools-core/) | Python library for common Snowflake tasks (bundled in builder app) | Beta |
+| [`builder-apps/claude-agent/`](builder-apps/claude-agent/) | Claude Code agent UI with Snowflake MCP tools | Beta |
+| [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) | Cortex Agent chat UI — no API key needed | Beta |
+| [`builder-apps/claude-agent/packages/snowflake-mcp-server/`](builder-apps/claude-agent/packages/snowflake-mcp-server/) | MCP server for Snowflake operations (bundled in claude-agent) | Beta |
+| [`builder-apps/claude-agent/packages/snowflake-tools-core/`](builder-apps/claude-agent/packages/snowflake-tools-core/) | Python library for common Snowflake tasks (bundled in claude-agent) | Beta |
 
 ---
 

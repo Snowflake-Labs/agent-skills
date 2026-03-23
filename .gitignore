@@ -39,7 +39,7 @@ dependency-reduced-pom.xml
 node_modules/
 
 # Builder app runtime data
-snowflake-builder-app/projects/
+builder-apps/*/projects/
 
 # OS
 .DS_Store
