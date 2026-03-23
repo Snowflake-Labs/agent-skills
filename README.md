@@ -105,7 +105,11 @@ cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .claude/rules/doc
 
 Chat with Claude + Snowflake MCP tools in a single UI.
 
-**Prerequisites:** Snowflake account (PAT or password auth), [Anthropic API key](https://console.anthropic.com/), Python 3.11+, Node.js 18+
+**Prerequisites:**
+- Snowflake account (PAT or password auth)
+- [Anthropic API key](https://console.anthropic.com/)
+- Python 3.11+
+- Node.js 18+
 
 ```bash
 git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
@@ -120,7 +124,10 @@ See [`builder-apps/claude-agent/`](builder-apps/claude-agent/) for details.
 
 Chat with Snowflake Cortex Agents — no external API key needed.
 
-**Prerequisites:** Snowflake account with a [Cortex Agent](https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents) created, Python 3.11+, Node.js 18+
+**Prerequisites:**
+- Snowflake account with a [Cortex Agent](https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents) created
+- Python 3.11+
+- Node.js 18+
 
 ```bash
 git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
