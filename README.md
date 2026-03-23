@@ -103,7 +103,9 @@ cp snowflake-ai-kit/snowflake-skills/docker-dev-setup/SKILL.md .claude/rules/doc
 
 ### Claude Agent App
 
-Chat with Claude + Snowflake MCP tools in a single UI. Requires an [Anthropic API key](https://console.anthropic.com/).
+Chat with Claude + Snowflake MCP tools in a single UI.
+
+**Prerequisites:** Snowflake account (PAT or password auth), [Anthropic API key](https://console.anthropic.com/), Python 3.11+, Node.js 18+
 
 ```bash
 git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
@@ -116,7 +118,9 @@ See [`builder-apps/claude-agent/`](builder-apps/claude-agent/) for details.
 
 ### Cortex Agent App
 
-Chat with Snowflake Cortex Agents — no external API key needed, just a Snowflake account.
+Chat with Snowflake Cortex Agents — no external API key needed.
+
+**Prerequisites:** Snowflake account with a [Cortex Agent](https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents) created, Python 3.11+, Node.js 18+
 
 ```bash
 git clone https://github.com/Snowflake-Labs/snowflake-ai-kit.git
@@ -131,14 +135,14 @@ See [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) for details.
 
 ## What's Included
 
-| Component | Description | Status |
-|-----------|-------------|--------|
-| [`snowflake-skills/`](snowflake-skills/) | Snowflake-specific skills (Snowpipe Streaming, ETL migration) | 3 skills |
-| [`general-skills/`](general-skills/) | General-purpose skills (Docker, Drizzle ORM, Supabase) | 3 skills |
-| [`builder-apps/claude-agent/`](builder-apps/claude-agent/) | Claude Code agent UI with Snowflake MCP tools | Beta |
-| [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) | Cortex Agent chat UI — no API key needed | Beta |
-| [`builder-apps/claude-agent/packages/snowflake-mcp-server/`](builder-apps/claude-agent/packages/snowflake-mcp-server/) | MCP server for Snowflake operations (bundled in claude-agent) | Beta |
-| [`builder-apps/claude-agent/packages/snowflake-tools-core/`](builder-apps/claude-agent/packages/snowflake-tools-core/) | Python library for common Snowflake tasks (bundled in claude-agent) | Beta |
+| Component | Description |
+|-----------|-------------|
+| [`snowflake-skills/`](snowflake-skills/) | Snowflake-specific skills (Snowpipe Streaming, ETL migration) |
+| [`general-skills/`](general-skills/) | General-purpose skills (Docker, Drizzle ORM, Supabase) |
+| [`builder-apps/claude-agent/`](builder-apps/claude-agent/) | Claude Code agent UI with Snowflake MCP tools |
+| [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) | Cortex Agent chat UI — no API key needed |
+| [`builder-apps/claude-agent/packages/snowflake-mcp-server/`](builder-apps/claude-agent/packages/snowflake-mcp-server/) | MCP server for Snowflake operations (bundled in claude-agent) |
+| [`builder-apps/claude-agent/packages/snowflake-tools-core/`](builder-apps/claude-agent/packages/snowflake-tools-core/) | Python library for common Snowflake tasks (bundled in claude-agent) |
 
 ---
 
