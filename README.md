@@ -19,7 +19,7 @@ Skills, MCP tools, and builder apps for AI coding agents working with Snowflake.
 
 | Adventure | Best For | Start Here |
 |-----------|----------|------------|
-| **Install AI Kit** | Add all Snowflake skills to your AI agent | [Quick Start](#quick-start) |
+| **Install Skills** | Add Snowflake skills to your agents | [Quick Start](#quick-start) |
 | **Browse Skills** | Explore patterns and best practices | [`snowflake-skills/`](snowflake-skills/) |
 | **Claude Agent App** | Chat with Claude + Snowflake tools in one UI | [`builder-apps/claude-agent/`](builder-apps/claude-agent/) |
 | **Cortex Agent App** | Chat with Cortex Agents — no API key needed | [`builder-apps/cortex-agent/`](builder-apps/cortex-agent/) |
